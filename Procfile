@@ -1,1 +1,1 @@
-web: python app_heroku_cloud.py 
+web: python app_heroku_simple.py 
