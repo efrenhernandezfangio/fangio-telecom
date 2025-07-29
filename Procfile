@@ -1,1 +1,0 @@
-web: gunicorn app_heroku_final:app 
