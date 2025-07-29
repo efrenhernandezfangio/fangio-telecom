@@ -1,1 +1,0 @@
-web: python app_heroku_completo.py 
