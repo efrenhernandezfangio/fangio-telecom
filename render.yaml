@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: fangio-telecom-app
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app_render:app
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.9.16 
