@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimizador de Rutas Avanzado - FANGIO Link Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .optimizer-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(45deg, #00d4aa, #0099cc);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        .ai-status .pulse {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .coordinates-input {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .constraints-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .constraint-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+
+        .constraint-label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .constraint-value {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #00d4aa, #00b894);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ffa502, #ff9500);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .map-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .map-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+
+        .result-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .result-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .route-details {
+            margin-top: 15px;
+        }
+
+        .route-point {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .optimization-progress {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .progress-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .progress-status {
+            background: linear-gradient(45deg, #00d4aa, #00b894);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4aa, #00b894);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .algorithm-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(100%);
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        .toast.success { border-left: 4px solid #00d4aa; }
+        .toast.error { border-left: 4px solid #ff4757; }
+        .toast.warning { border-left: 4px solid #ffa502; }
+        .toast.info { border-left: 4px solid #74b9ff; }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #00d4aa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                order: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .coordinates-input,
+            .constraints-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .algorithm-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="optimizer-container">
+        <div class="header">
+            <h1><i class="fas fa-route"></i> Optimizador de Rutas Avanzado</h1>
+            <div class="ai-status">
+                <div class="pulse"></div>
+                IA Activa - Algoritmos Inteligentes
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3 class="panel-title">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Puntos de Enlace
+                    </h3>
+                    <div class="form-group">
+                        <label>Punto de Origen</label>
+                        <div class="coordinates-input">
+                            <input type="number" id="startLat" placeholder="Latitud" step="0.000001">
+                            <input type="number" id="startLng" placeholder="Longitud" step="0.000001">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Punto de Destino</label>
+                        <div class="coordinates-input">
+                            <input type="number" id="endLat" placeholder="Latitud" step="0.000001">
+                            <input type="number" id="endLng" placeholder="Longitud" step="0.000001">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre del Enlace</label>
+                        <input type="text" id="linkName" placeholder="PT-OPT-001">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title">
+                        <i class="fas fa-cogs"></i>
+                        Parámetros de Optimización
+                    </h3>
+                    <div class="form-group">
+                        <label>Algoritmo de Optimización</label>
+                        <select id="algorithm">
+                            <option value="genetic">Algoritmo Genético</option>
+                            <option value="ant_colony">Colonia de Hormigas</option>
+                            <option value="neural_network">Red Neuronal</option>
+                            <option value="hybrid">Híbrido (Recomendado)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Objetivo Principal</label>
+                        <select id="primaryGoal">
+                            <option value="minimize_distance">Minimizar Distancia</option>
+                            <option value="maximize_signal">Maximizar Señal</option>
+                            <option value="minimize_cost">Minimizar Costo</option>
+                            <option value="balanced">Equilibrado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Frecuencia Objetivo (GHz)</label>
+                        <select id="targetFrequency">
+                            <option value="2.4">2.4 GHz</option>
+                            <option value="5.8">5.8 GHz</option>
+                            <option value="6">6 GHz</option>
+                            <option value="24">24 GHz</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Restricciones
+                    </h3>
+                    <div class="constraints-grid">
+                        <div class="constraint-item">
+                            <div class="constraint-label">Distancia Máxima</div>
+                            <div class="constraint-value">
+                                <input type="number" id="maxDistance" placeholder="10" step="0.1"> km
+                            </div>
+                        </div>
+                        <div class="constraint-item">
+                            <div class="constraint-label">Altura Mínima</div>
+                            <div class="constraint-value">
+                                <input type="number" id="minHeight" placeholder="5" step="0.1"> m
+                            </div>
+                        </div>
+                        <div class="constraint-item">
+                            <div class="constraint-label">Presupuesto Máximo</div>
+                            <div class="constraint-value">
+                                <input type="number" id="maxBudget" placeholder="50000"> USD
+                            </div>
+                        </div>
+                        <div class="constraint-item">
+                            <div class="constraint-label">Tiempo Máximo</div>
+                            <div class="constraint-value">
+                                <input type="number" id="maxTime" placeholder="30"> días
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title">
+                        <i class="fas fa-sliders-h"></i>
+                        Configuración Avanzada
+                    </h3>
+                    <div class="form-group">
+                        <label>Puntos Intermedios (Opcional)</label>
+                        <textarea id="waypoints" placeholder="Lat,Lng;Lat,Lng;Lat,Lng" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Zonas de Exclusión</label>
+                        <textarea id="exclusionZones" placeholder="Áreas restringidas o protegidas" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Factores de Peso</label>
+                        <div class="constraints-grid">
+                            <div class="constraint-item">
+                                <div class="constraint-label">Terreno</div>
+                                <input type="range" id="terrainWeight" min="0" max="10" value="7">
+                            </div>
+                            <div class="constraint-item">
+                                <div class="constraint-label">Costo</div>
+                                <input type="range" id="costWeight" min="0" max="10" value="6">
+                            </div>
+                            <div class="constraint-item">
+                                <div class="constraint-label">Rendimiento</div>
+                                <input type="range" id="performanceWeight" min="0" max="10" value="8">
+                            </div>
+                            <div class="constraint-item">
+                                <div class="constraint-label">Regulaciones</div>
+                                <input type="range" id="regulationWeight" min="0" max="10" value="9">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="routeOptimizer.startOptimization()">
+                    <i class="fas fa-play"></i>
+                    Iniciar Optimización
+                </button>
+                <button class="btn btn-success" onclick="routeOptimizer.saveRoute()">
+                    <i class="fas fa-save"></i>
+                    Guardar Ruta
+                </button>
+                <button class="btn btn-warning" onclick="routeOptimizer.exportResults()">
+                    <i class="fas fa-download"></i>
+                    Exportar Resultados
+                </button>
+            </div>
+
+            <div class="map-container">
+                <div class="map-header">
+                    <h3 class="map-title">Visualización de Rutas</h3>
+                    <div class="map-controls">
+                        <button class="btn btn-primary" onclick="routeOptimizer.clearMap()">
+                            <i class="fas fa-trash"></i>
+                            Limpiar
+                        </button>
+                        <button class="btn btn-success" onclick="routeOptimizer.toggleLayers()">
+                            <i class="fas fa-layer-group"></i>
+                            Capas
+                        </button>
+                    </div>
+                </div>
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <div class="optimization-progress" id="progressPanel" style="display: none;">
+            <div class="progress-header">
+                <h3 class="progress-title">Progreso de Optimización</h3>
+                <div class="progress-status" id="progressStatus">Ejecutando...</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div class="algorithm-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="iterations">0</div>
+                    <div class="stat-label">Iteraciones</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="bestFitness">0</div>
+                    <div class="stat-label">Mejor Aptitud</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="populationSize">0</div>
+                    <div class="stat-label">Población</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="elapsedTime">0s</div>
+                    <div class="stat-label">Tiempo Transcurrido</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-panel" id="resultsPanel" style="display: none;">
+            <h3 class="panel-title">
+                <i class="fas fa-chart-line"></i>
+                Resultados de Optimización
+            </h3>
+            <div class="results-grid" id="resultsGrid">
+                <!-- Los resultados se mostrarán dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clases de utilidad
+        class ToastManager {
+            constructor() {
+                this.container = document.getElementById('toastContainer');
+            }
+
+            show(message, type = 'info', duration = 5000) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icon = this.getIcon(type);
+                toast.innerHTML = `
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                `;
+
+                this.container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        this.container.removeChild(toast);
+                    }, 300);
+                }, duration);
+            }
+
+            getIcon(type) {
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                return icons[type] || icons.info;
+            }
+        }
+
+        class LoadingManager {
+            constructor() {
+                this.overlay = document.getElementById('loadingOverlay');
+            }
+
+            show() {
+                this.overlay.style.display = 'flex';
+            }
+
+            hide() {
+                this.overlay.style.display = 'none';
+            }
+        }
+
+        class RouteOptimizer {
+            constructor() {
+                this.toast = new ToastManager();
+                this.loading = new LoadingManager();
+                this.map = null;
+                this.markers = [];
+                this.routes = [];
+                this.optimizationResults = [];
+                this.isOptimizing = false;
+                this.init();
+            }
+
+            async init() {
+                this.loading.show();
+                
+                try {
+                    this.initializeMap();
+                    this.setupEventListeners();
+                    this.loadDefaultData();
+                    this.toast.show('Optimizador de rutas inicializado', 'success');
+                } catch (error) {
+                    this.toast.show('Error al inicializar: ' + error.message, 'error');
+                } finally {
+                    this.loading.hide();
+                }
+            }
+
+            initializeMap() {
+                this.map = L.map('map').setView([19.4326, -99.1332], 10);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(this.map);
+
+                // Agregar capas adicionales
+                this.addMapLayers();
+            }
+
+            addMapLayers() {
+                // Capa de terreno
+                const terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenTopoMap'
+                });
+
+                // Capa de satélite
+                const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: '© Esri'
+                });
+
+                // Control de capas
+                const baseMaps = {
+                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                    "Terreno": terrainLayer,
+                    "Satélite": satelliteLayer
+                };
+
+                L.control.layers(baseMaps).addTo(this.map);
+            }
+
+            setupEventListeners() {
+                // Event listeners para el mapa
+                this.map.on('click', (e) => {
+                    this.handleMapClick(e);
+                });
+
+                // Event listeners para formularios
+                document.getElementById('startLat').addEventListener('change', () => this.updateMap());
+                document.getElementById('startLng').addEventListener('change', () => this.updateMap());
+                document.getElementById('endLat').addEventListener('change', () => this.updateMap());
+                document.getElementById('endLng').addEventListener('change', () => this.updateMap());
+            }
+
+            loadDefaultData() {
+                // Datos de ejemplo
+                document.getElementById('startLat').value = '19.4326';
+                document.getElementById('startLng').value = '-99.1332';
+                document.getElementById('endLat').value = '19.4326';
+                document.getElementById('endLng').value = '-99.1332';
+                document.getElementById('linkName').value = 'PT-OPT-001';
+                document.getElementById('maxDistance').value = '10';
+                document.getElementById('minHeight').value = '5';
+                document.getElementById('maxBudget').value = '50000';
+                document.getElementById('maxTime').value = '30';
+
+                this.updateMap();
+            }
+
+            handleMapClick(e) {
+                const { lat, lng } = e.latlng;
+                
+                // Si no hay punto de inicio, establecerlo
+                if (!document.getElementById('startLat').value) {
+                    document.getElementById('startLat').value = lat.toFixed(6);
+                    document.getElementById('startLng').value = lng.toFixed(6);
+                }
+                // Si no hay punto de fin, establecerlo
+                else if (!document.getElementById('endLat').value) {
+                    document.getElementById('endLat').value = lat.toFixed(6);
+                    document.getElementById('endLng').value = lng.toFixed(6);
+                }
+                // Si ambos están establecidos, actualizar el fin
+                else {
+                    document.getElementById('endLat').value = lat.toFixed(6);
+                    document.getElementById('endLng').value = lng.toFixed(6);
+                }
+
+                this.updateMap();
+            }
+
+            updateMap() {
+                this.clearMap();
+
+                const startLat = parseFloat(document.getElementById('startLat').value);
+                const startLng = parseFloat(document.getElementById('startLng').value);
+                const endLat = parseFloat(document.getElementById('endLat').value);
+                const endLng = parseFloat(document.getElementById('endLng').value);
+
+                if (startLat && startLng) {
+                    const startMarker = L.marker([startLat, startLng], {
+                        icon: L.divIcon({
+                            className: 'custom-marker start-marker',
+                            html: '<i class="fas fa-play" style="color: #00d4aa; font-size: 20px;"></i>',
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(this.map);
+                    
+                    startMarker.bindPopup('Punto de Origen');
+                    this.markers.push(startMarker);
+                }
+
+                if (endLat && endLng) {
+                    const endMarker = L.marker([endLat, endLng], {
+                        icon: L.divIcon({
+                            className: 'custom-marker end-marker',
+                            html: '<i class="fas fa-flag-checkered" style="color: #ff4757; font-size: 20px;"></i>',
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(this.map);
+                    
+                    endMarker.bindPopup('Punto de Destino');
+                    this.markers.push(endMarker);
+                }
+
+                if (startLat && startLng && endLat && endLng) {
+                    this.map.fitBounds([[startLat, startLng], [endLat, endLng]]);
+                }
+            }
+
+            clearMap() {
+                this.markers.forEach(marker => this.map.removeLayer(marker));
+                this.routes.forEach(route => this.map.removeLayer(route));
+                this.markers = [];
+                this.routes = [];
+            }
+
+            async startOptimization() {
+                if (this.isOptimizing) {
+                    this.toast.show('Optimización ya en progreso', 'warning');
+                    return;
+                }
+
+                const startLat = parseFloat(document.getElementById('startLat').value);
+                const startLng = parseFloat(document.getElementById('startLng').value);
+                const endLat = parseFloat(document.getElementById('endLat').value);
+                const endLng = parseFloat(document.getElementById('endLng').value);
+
+                if (!startLat || !startLng || !endLat || !endLng) {
+                    this.toast.show('Por favor, establece los puntos de origen y destino', 'error');
+                    return;
+                }
+
+                this.isOptimizing = true;
+                this.showProgressPanel();
+                this.toast.show('Iniciando optimización de ruta...', 'info');
+
+                try {
+                    await this.runOptimization();
+                } catch (error) {
+                    this.toast.show('Error en la optimización: ' + error.message, 'error');
+                } finally {
+                    this.isOptimizing = false;
+                    this.hideProgressPanel();
+                }
+            }
+
+            showProgressPanel() {
+                document.getElementById('progressPanel').style.display = 'block';
+                this.updateProgress(0, 'Inicializando...');
+            }
+
+            hideProgressPanel() {
+                document.getElementById('progressPanel').style.display = 'none';
+            }
+
+            updateProgress(percentage, status) {
+                document.getElementById('progressFill').style.width = percentage + '%';
+                document.getElementById('progressStatus').textContent = status;
+            }
+
+            async runOptimization() {
+                const algorithm = document.getElementById('algorithm').value;
+                const primaryGoal = document.getElementById('primaryGoal').value;
+                const maxDistance = parseFloat(document.getElementById('maxDistance').value);
+                const maxBudget = parseFloat(document.getElementById('maxBudget').value);
+
+                // Simular proceso de optimización
+                const totalSteps = 100;
+                let currentStep = 0;
+
+                const optimizationInterval = setInterval(() => {
+                    currentStep++;
+                    const percentage = (currentStep / totalSteps) * 100;
+                    
+                    // Actualizar estadísticas
+                    document.getElementById('iterations').textContent = currentStep * 50;
+                    document.getElementById('bestFitness').textContent = (85 + Math.random() * 15).toFixed(2);
+                    document.getElementById('populationSize').textContent = 100 + currentStep * 2;
+                    document.getElementById('elapsedTime').textContent = currentStep + 's';
+
+                    if (currentStep <= 20) {
+                        this.updateProgress(percentage, 'Analizando terreno...');
+                    } else if (currentStep <= 40) {
+                        this.updateProgress(percentage, 'Calculando rutas...');
+                    } else if (currentStep <= 60) {
+                        this.updateProgress(percentage, 'Optimizando parámetros...');
+                    } else if (currentStep <= 80) {
+                        this.updateProgress(percentage, 'Evaluando restricciones...');
+                    } else {
+                        this.updateProgress(percentage, 'Finalizando...');
+                    }
+
+                    if (currentStep >= totalSteps) {
+                        clearInterval(optimizationInterval);
+                        this.completeOptimization();
+                    }
+                }, 100);
+            }
+
+            completeOptimization() {
+                this.updateProgress(100, 'Completado');
+                this.generateResults();
+                this.showResults();
+                this.toast.show('Optimización completada exitosamente', 'success');
+            }
+
+            generateResults() {
+                const startLat = parseFloat(document.getElementById('startLat').value);
+                const startLng = parseFloat(document.getElementById('startLng').value);
+                const endLat = parseFloat(document.getElementById('endLat').value);
+                const endLng = parseFloat(document.getElementById('endLng').value);
+
+                // Generar rutas optimizadas
+                this.optimizationResults = [
+                    {
+                        id: 'route1',
+                        name: 'Ruta Óptima',
+                        type: 'optimal',
+                        distance: (Math.random() * 5 + 3).toFixed(2),
+                        cost: (Math.random() * 20000 + 15000).toFixed(0),
+                        performance: (Math.random() * 20 + 80).toFixed(1),
+                        feasibility: (Math.random() * 15 + 85).toFixed(1),
+                        route: this.generateRoutePoints(startLat, startLng, endLat, endLng, 'optimal'),
+                        color: '#00d4aa'
+                    },
+                    {
+                        id: 'route2',
+                        name: 'Ruta Alternativa 1',
+                        type: 'alternative',
+                        distance: (Math.random() * 5 + 4).toFixed(2),
+                        cost: (Math.random() * 25000 + 12000).toFixed(0),
+                        performance: (Math.random() * 15 + 75).toFixed(1),
+                        feasibility: (Math.random() * 20 + 70).toFixed(1),
+                        route: this.generateRoutePoints(startLat, startLng, endLat, endLng, 'alternative1'),
+                        color: '#74b9ff'
+                    },
+                    {
+                        id: 'route3',
+                        name: 'Ruta Alternativa 2',
+                        type: 'alternative',
+                        distance: (Math.random() * 5 + 5).toFixed(2),
+                        cost: (Math.random() * 30000 + 10000).toFixed(0),
+                        performance: (Math.random() * 10 + 70).toFixed(1),
+                        feasibility: (Math.random() * 25 + 65).toFixed(1),
+                        route: this.generateRoutePoints(startLat, startLng, endLat, endLng, 'alternative2'),
+                        color: '#a29bfe'
+                    }
+                ];
+
+                this.displayRoutes();
+            }
+
+            generateRoutePoints(startLat, startLng, endLat, endLng, type) {
+                const points = [];
+                const steps = 10;
+
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    let lat, lng;
+
+                    switch (type) {
+                        case 'optimal':
+                            // Ruta directa con pequeñas variaciones
+                            lat = startLat + (endLat - startLat) * t + (Math.random() - 0.5) * 0.001;
+                            lng = startLng + (endLng - startLng) * t + (Math.random() - 0.5) * 0.001;
+                            break;
+                        case 'alternative1':
+                            // Ruta con desviación hacia el norte
+                            const midLat = (startLat + endLat) / 2 + 0.002;
+                            const midLng = (startLng + endLng) / 2;
+                            if (t <= 0.5) {
+                                lat = startLat + (midLat - startLat) * (t * 2);
+                                lng = startLng + (midLng - startLng) * (t * 2);
+                            } else {
+                                lat = midLat + (endLat - midLat) * ((t - 0.5) * 2);
+                                lng = midLng + (endLng - midLng) * ((t - 0.5) * 2);
+                            }
+                            break;
+                        case 'alternative2':
+                            // Ruta con desviación hacia el sur
+                            const midLat2 = (startLat + endLat) / 2 - 0.002;
+                            const midLng2 = (startLng + endLng) / 2;
+                            if (t <= 0.5) {
+                                lat = startLat + (midLat2 - startLat) * (t * 2);
+                                lng = startLng + (midLng2 - startLng) * (t * 2);
+                            } else {
+                                lat = midLat2 + (endLat - midLat2) * ((t - 0.5) * 2);
+                                lng = midLng2 + (endLng - midLng2) * ((t - 0.5) * 2);
+                            }
+                            break;
+                    }
+
+                    points.push([lat, lng]);
+                }
+
+                return points;
+            }
+
+            displayRoutes() {
+                this.optimizationResults.forEach((result, index) => {
+                    const route = L.polyline(result.route, {
+                        color: result.color,
+                        weight: index === 0 ? 4 : 2,
+                        opacity: 0.8
+                    }).addTo(this.map);
+
+                    route.bindPopup(`
+                        <strong>${result.name}</strong><br>
+                        Distancia: ${result.distance} km<br>
+                        Costo: $${result.cost}<br>
+                        Rendimiento: ${result.performance}%<br>
+                        Factibilidad: ${result.feasibility}%
+                    `);
+
+                    this.routes.push(route);
+                });
+
+                // Ajustar vista para mostrar todas las rutas
+                if (this.routes.length > 0) {
+                    const group = new L.featureGroup(this.routes);
+                    this.map.fitBounds(group.getBounds());
+                }
+            }
+
+            showResults() {
+                const container = document.getElementById('resultsGrid');
+                container.innerHTML = this.optimizationResults.map(result => `
+                    <div class="result-card">
+                        <div class="result-content">
+                            <div class="result-title">
+                                <i class="fas ${result.type === 'optimal' ? 'fa-star' : 'fa-route'}"></i>
+                                ${result.name}
+                            </div>
+                            <div class="result-metrics">
+                                <div class="metric-item">
+                                    <div class="metric-value">${result.distance}</div>
+                                    <div class="metric-label">km</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">$${result.cost}</div>
+                                    <div class="metric-label">Costo</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">${result.performance}%</div>
+                                    <div class="metric-label">Rendimiento</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">${result.feasibility}%</div>
+                                    <div class="metric-label">Factibilidad</div>
+                                </div>
+                            </div>
+                            <div class="route-details">
+                                <div class="route-point">Inicio: ${result.route[0][0].toFixed(6)}, ${result.route[0][1].toFixed(6)}</div>
+                                <div class="route-point">Fin: ${result.route[result.route.length-1][0].toFixed(6)}, ${result.route[result.route.length-1][1].toFixed(6)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('resultsPanel').style.display = 'block';
+            }
+
+            saveRoute() {
+                if (this.optimizationResults.length === 0) {
+                    this.toast.show('No hay rutas para guardar', 'warning');
+                    return;
+                }
+
+                const routeData = {
+                    name: document.getElementById('linkName').value,
+                    timestamp: new Date().toISOString(),
+                    results: this.optimizationResults
+                };
+
+                localStorage.setItem('savedRoute_' + Date.now(), JSON.stringify(routeData));
+                this.toast.show('Ruta guardada exitosamente', 'success');
+            }
+
+            exportResults() {
+                if (this.optimizationResults.length === 0) {
+                    this.toast.show('No hay resultados para exportar', 'warning');
+                    return;
+                }
+
+                const exportData = {
+                    optimization: {
+                        algorithm: document.getElementById('algorithm').value,
+                        primaryGoal: document.getElementById('primaryGoal').value,
+                        constraints: {
+                            maxDistance: document.getElementById('maxDistance').value,
+                            maxBudget: document.getElementById('maxBudget').value,
+                            minHeight: document.getElementById('minHeight').value
+                        }
+                    },
+                    results: this.optimizationResults
+                };
+
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'route_optimization_results.json';
+                a.click();
+                URL.revokeObjectURL(url);
+
+                this.toast.show('Resultados exportados exitosamente', 'success');
+            }
+
+            toggleLayers() {
+                this.toast.show('Funcionalidad de capas en desarrollo', 'info');
+            }
+        }
+
+        // Inicializar optimizador
+        let routeOptimizer;
+        document.addEventListener('DOMContentLoaded', () => {
+            routeOptimizer = new RouteOptimizer();
+        });
+    </script>
+</body>
+</html> 

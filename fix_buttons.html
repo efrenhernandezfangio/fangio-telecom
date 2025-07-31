@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Arreglar Botones - Fangio Telecom</title>
+  <style>
+    body {
+      background: #081421;
+      color: #e0f7fa;
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+    }
+    .fix-section {
+      background: rgba(11, 17, 31, 0.8);
+      border: 1px solid #00e6ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .btn {
+      background: linear-gradient(135deg, #00bcd4, #1e88e5);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      font-weight: 600;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #1e88e5, #00bcd4);
+    }
+    .status {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .status.success {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #10b981;
+    }
+    .status.error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+    .status.warning {
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid #f59e0b;
+      color: #f59e0b;
+    }
+    pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Arreglar Problemas de Botones - Fangio Telecom</h1>
+  
+  <div class="fix-section">
+    <h2>🔍 Diagnóstico Automático</h2>
+    <button class="btn" onclick="runDiagnostic()">Ejecutar Diagnóstico Completo</button>
+    <div id="diagnostic-results"></div>
+  </div>
+
+  <div class="fix-section">
+    <h2>🛠️ Soluciones Rápidas</h2>
+    <button class="btn" onclick="fixJavaScriptErrors()">Arreglar Errores JavaScript</button>
+    <button class="btn" onclick="fixEventListeners()">Arreglar Event Listeners</button>
+    <button class="btn" onclick="fixCSSIssues()">Arreglar Problemas CSS</button>
+    <button class="btn" onclick="clearCache()">Limpiar Cache y Storage</button>
+  </div>
+
+  <div class="fix-section">
+    <h2>📋 Verificación de Archivos</h2>
+    <button class="btn" onclick="checkFiles()">Verificar Archivos Principales</button>
+    <div id="file-check-results"></div>
+  </div>
+
+  <div class="fix-section">
+    <h2>🚨 Errores Detectados</h2>
+    <div id="error-log"></div>
+  </div>
+
+  <div class="fix-section">
+    <h2>🔗 Navegación de Prueba</h2>
+    <button class="btn" onclick="testNavigation('login.html')">Probar Login</button>
+    <button class="btn" onclick="testNavigation('ptpFangio.html')">Probar PtP</button>
+    <button class="btn" onclick="testNavigation('ptmpFangio.html')">Probar PtMP</button>
+  </div>
+
+  <script>
+    // Capturar todos los errores
+    window.addEventListener('error', function(e) {
+      logError(`Error de JavaScript: ${e.message} en ${e.filename}:${e.lineno}`);
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+      logError(`Promesa rechazada: ${e.reason}`);
+    });
+
+    function logError(message) {
+      const errorLog = document.getElementById('error-log');
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'status error';
+      errorDiv.innerHTML = `${message} - ${new Date().toLocaleTimeString()}`;
+      errorLog.appendChild(errorDiv);
+    }
+
+    function addResult(message, type = 'success') {
+      const results = document.getElementById('diagnostic-results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `status ${type}`;
+      resultDiv.innerHTML = `${message} - ${new Date().toLocaleTimeString()}`;
+      results.appendChild(resultDiv);
+    }
+
+    function runDiagnostic() {
+      const results = document.getElementById('diagnostic-results');
+      results.innerHTML = '';
+      
+      addResult('🚀 Iniciando diagnóstico completo...');
+      
+      // Verificar JavaScript básico
+      try {
+        eval('1 + 1');
+        addResult('✅ JavaScript básico funcionando');
+      } catch (e) {
+        addResult('❌ Error en JavaScript básico', 'error');
+      }
+
+      // Verificar DOM
+      try {
+        document.getElementById('diagnostic-results');
+        addResult('✅ DOM accesible');
+      } catch (e) {
+        addResult('❌ Error en DOM', 'error');
+      }
+
+      // Verificar localStorage
+      try {
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+        addResult('✅ localStorage funcionando');
+      } catch (e) {
+        addResult('❌ Error en localStorage', 'error');
+      }
+
+      // Verificar fetch
+      fetch('config.js', { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            addResult('✅ config.js accesible');
+          } else {
+            addResult('❌ config.js no encontrado', 'error');
+          }
+        })
+        .catch(error => {
+          addResult(`❌ Error accediendo a config.js: ${error.message}`, 'error');
+        });
+
+      // Verificar funciones críticas
+      try {
+        if (typeof mostrarPestana === 'function') {
+          addResult('✅ Función mostrarPestana disponible');
+        } else {
+          addResult('❌ Función mostrarPestana no encontrada', 'error');
+        }
+      } catch (e) {
+        addResult('❌ Error verificando mostrarPestana', 'error');
+      }
+
+      addResult('✅ Diagnóstico completado');
+    }
+
+    function fixJavaScriptErrors() {
+      addResult('🔧 Intentando arreglar errores JavaScript...', 'warning');
+      
+      // Limpiar posibles errores de sintaxis
+      try {
+        // Verificar si hay errores en config.js
+        if (typeof FANGIO_CONFIG !== 'undefined') {
+          addResult('✅ FANGIO_CONFIG cargado correctamente');
+        } else {
+          addResult('⚠️ FANGIO_CONFIG no disponible', 'warning');
+        }
+      } catch (e) {
+        addResult(`❌ Error en FANGIO_CONFIG: ${e.message}`, 'error');
+      }
+
+      // Verificar funciones de microondas
+      const functions = [
+        'analizarEnlacesMicroondas',
+        'calcularPathLossMicroondas',
+        'calcularMargenFadingMicroondas',
+        'calcularDisponibilidadReal',
+        'inicializarMonitoreoMicroondas'
+      ];
+
+      functions.forEach(funcName => {
+        try {
+          if (typeof window[funcName] === 'function') {
+            addResult(`✅ ${funcName} disponible`);
+          } else {
+            addResult(`❌ ${funcName} no encontrada`, 'error');
+          }
+        } catch (e) {
+          addResult(`❌ Error en ${funcName}: ${e.message}`, 'error');
+        }
+      });
+    }
+
+    function fixEventListeners() {
+      addResult('🔧 Verificando event listeners...', 'warning');
+      
+      // Verificar si los botones tienen event listeners
+      const buttons = document.querySelectorAll('button');
+      addResult(`📊 Encontrados ${buttons.length} botones en esta página`);
+      
+      buttons.forEach((button, index) => {
+        if (index < 5) { // Solo mostrar los primeros 5
+          const hasOnClick = button.hasAttribute('onclick');
+          const hasListeners = button.onclick !== null;
+          addResult(`Botón ${index + 1}: onclick=${hasOnClick}, listeners=${hasListeners}`);
+        }
+      });
+    }
+
+    function fixCSSIssues() {
+      addResult('🔧 Verificando problemas CSS...', 'warning');
+      
+      // Verificar si hay elementos con pointer-events: none
+      const elements = document.querySelectorAll('*');
+      let pointerEventsNone = 0;
+      
+      elements.forEach(element => {
+        const style = window.getComputedStyle(element);
+        if (style.pointerEvents === 'none') {
+          pointerEventsNone++;
+        }
+      });
+      
+      addResult(`📊 Elementos con pointer-events: none: ${pointerEventsNone}`);
+      
+      // Verificar z-index
+      let highZIndex = 0;
+      elements.forEach(element => {
+        const style = window.getComputedStyle(element);
+        const zIndex = parseInt(style.zIndex);
+        if (zIndex > highZIndex) {
+          highZIndex = zIndex;
+        }
+      });
+      
+      addResult(`📊 Z-index más alto: ${highZIndex}`);
+    }
+
+    function clearCache() {
+      addResult('🧹 Limpiando cache y storage...', 'warning');
+      
+      try {
+        // Limpiar localStorage
+        const keys = Object.keys(localStorage);
+        keys.forEach(key => {
+          if (key.startsWith('test_') || key.includes('temp')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
+        // Limpiar sessionStorage
+        sessionStorage.clear();
+        
+        addResult('✅ Cache y storage limpiados');
+      } catch (e) {
+        addResult(`❌ Error limpiando cache: ${e.message}`, 'error');
+      }
+    }
+
+    function checkFiles() {
+      const results = document.getElementById('file-check-results');
+      results.innerHTML = '';
+      
+      const files = [
+        'login.html',
+        'ptpFangio.html', 
+        'ptmpFangio.html',
+        'config.js',
+        'perfil_elevacion.html'
+      ];
+      
+      files.forEach(file => {
+        fetch(file, { method: 'HEAD' })
+          .then(response => {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = response.ok ? 'status success' : 'status error';
+            statusDiv.innerHTML = `${response.ok ? '✅' : '❌'} ${file} - ${response.status}`;
+            results.appendChild(statusDiv);
+          })
+          .catch(error => {
+            const statusDiv = document.createElement('div');
+            statusDiv.className = 'status error';
+            statusDiv.innerHTML = `❌ ${file} - Error: ${error.message}`;
+            results.appendChild(statusDiv);
+          });
+      });
+    }
+
+    function testNavigation(url) {
+      addResult(`🧪 Probando navegación a ${url}...`, 'warning');
+      
+      // Simular navegación
+      setTimeout(() => {
+        try {
+          window.location.href = url;
+        } catch (e) {
+          addResult(`❌ Error navegando a ${url}: ${e.message}`, 'error');
+        }
+      }, 1000);
+    }
+
+    // Diagnóstico automático al cargar
+    window.addEventListener('load', function() {
+      addResult('🚀 Página de diagnóstico cargada');
+      runDiagnostic();
+    });
+  </script>
+</body>
+</html> 

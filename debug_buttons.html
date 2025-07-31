@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Diagnóstico de Botones - Fangio Telecom</title>
+  <style>
+    body {
+      background: #081421;
+      color: #e0f7fa;
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+    }
+    .debug-section {
+      background: rgba(11, 17, 31, 0.8);
+      border: 1px solid #00e6ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .test-button {
+      background: linear-gradient(135deg, #00bcd4, #1e88e5);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      font-weight: 600;
+    }
+    .test-button:hover {
+      background: linear-gradient(135deg, #1e88e5, #00bcd4);
+    }
+    .status {
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+    .status.success {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #10b981;
+    }
+    .status.error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+    .status.warning {
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid #f59e0b;
+      color: #f59e0b;
+    }
+    pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 Diagnóstico de Botones - Fangio Telecom</h1>
+  
+  <div class="debug-section">
+    <h2>📋 Información del Sistema</h2>
+    <div id="system-info"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>🔍 Pruebas de Botones</h2>
+    <button class="test-button" onclick="testButtonClick('Botón de prueba 1')">Botón de Prueba 1</button>
+    <button class="test-button" onclick="testButtonClick('Botón de prueba 2')">Botón de Prueba 2</button>
+    <button class="test-button" id="event-test">Botón con Event Listener</button>
+    <div id="button-test-results"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>🎯 Verificación de Elementos</h2>
+    <button class="test-button" onclick="checkElements()">Verificar Elementos</button>
+    <div id="element-check-results"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>🚨 Errores de JavaScript</h2>
+    <div id="js-errors"></div>
+  </div>
+
+  <div class="debug-section">
+    <h2>🔗 Navegación</h2>
+    <button class="test-button" onclick="window.location.href='login.html'">Ir a Login</button>
+    <button class="test-button" onclick="window.location.href='ptpFangio.html'">Ir a PtP</button>
+    <button class="test-button" onclick="window.location.href='ptmpFangio.html'">Ir a PtMP</button>
+  </div>
+
+  <script>
+    // Capturar errores de JavaScript
+    window.addEventListener('error', function(e) {
+      const errorDiv = document.getElementById('js-errors');
+      errorDiv.innerHTML += `
+        <div class="status error">
+          <strong>Error:</strong> ${e.message}<br>
+          <strong>Archivo:</strong> ${e.filename}<br>
+          <strong>Línea:</strong> ${e.lineno}
+        </div>
+      `;
+    });
+
+    // Información del sistema
+    document.getElementById('system-info').innerHTML = `
+      <div class="status success">
+        <strong>Navegador:</strong> ${navigator.userAgent}<br>
+        <strong>URL:</strong> ${window.location.href}<br>
+        <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+      </div>
+    `;
+
+    // Prueba de botones
+    function testButtonClick(buttonName) {
+      const results = document.getElementById('button-test-results');
+      results.innerHTML += `
+        <div class="status success">
+          ✅ ${buttonName} funcionando correctamente - ${new Date().toLocaleTimeString()}
+        </div>
+      `;
+    }
+
+    // Event listener para botón de prueba
+    document.getElementById('event-test').addEventListener('click', function() {
+      testButtonClick('Botón con Event Listener');
+    });
+
+    // Verificar elementos
+    function checkElements() {
+      const results = document.getElementById('element-check-results');
+      results.innerHTML = '';
+
+      // Verificar si los archivos principales existen
+      const files = ['login.html', 'ptpFangio.html', 'ptmpFangio.html', 'config.js'];
+      
+      files.forEach(file => {
+        fetch(file, { method: 'HEAD' })
+          .then(response => {
+            if (response.ok) {
+              results.innerHTML += `
+                <div class="status success">
+                  ✅ ${file} - Disponible (${response.status})
+                </div>
+              `;
+            } else {
+              results.innerHTML += `
+                <div class="status error">
+                  ❌ ${file} - Error ${response.status}
+                </div>
+              `;
+            }
+          })
+          .catch(error => {
+            results.innerHTML += `
+              <div class="status error">
+                ❌ ${file} - No encontrado: ${error.message}
+              </div>
+            `;
+          });
+      });
+    }
+
+    // Verificar config.js
+    try {
+      if (typeof FANGIO_CONFIG !== 'undefined') {
+        document.getElementById('system-info').innerHTML += `
+          <div class="status success">
+            ✅ config.js cargado correctamente
+          </div>
+        `;
+      } else {
+        document.getElementById('system-info').innerHTML += `
+          <div class="status warning">
+            ⚠️ config.js no está disponible
+          </div>
+        `;
+      }
+    } catch (error) {
+      document.getElementById('system-info').innerHTML += `
+        <div class="status error">
+          ❌ Error al cargar config.js: ${error.message}
+        </div>
+      `;
+    }
+
+    // Verificar elementos al cargar
+    window.addEventListener('load', function() {
+      document.getElementById('system-info').innerHTML += `
+        <div class="status success">
+          ✅ Página cargada completamente
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html> 

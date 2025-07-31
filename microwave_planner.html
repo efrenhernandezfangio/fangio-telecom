@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Enlaces Microondas - FANGIO Telecom</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .planner-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .planning-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn-plan {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-plan:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(39, 174, 96, 0.3);
+        }
+
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e6ed;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .planning-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .planning-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 4px solid #27ae60;
+        }
+
+        .planning-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .planning-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .frequency-coordination {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .coordination-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .frequency-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .frequency-item {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e0e6ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .frequency-available {
+            border-left: 4px solid #27ae60;
+        }
+
+        .frequency-occupied {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .frequency-warning {
+            border-left: 4px solid #f39c12;
+        }
+
+        .interference-analysis {
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .interference-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .interference-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .interference-title {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .interference-level {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .level-low { background: #27ae60; color: white; }
+        .level-medium { background: #f39c12; color: white; }
+        .level-high { background: #e74c3c; color: white; }
+
+        .chart-container {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="planner-container">
+        <div class="header">
+            <h1><i class="fas fa-route"></i> Planificador de Enlaces Microondas</h1>
+            <p class="subtitle">Planificación avanzada con coordinación de frecuencias y análisis de interferencias</p>
+        </div>
+
+        <div class="main-content">
+            <div class="planning-panel">
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-map-marker-alt"></i> Ubicaciones</h3>
+                    <div class="form-group">
+                        <label>Nombre del Enlace:</label>
+                        <input type="text" id="linkName" placeholder="Ej: Link-MW-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Latitud A:</label>
+                        <input type="number" id="latA" step="0.000001" placeholder="Ej: -34.6037">
+                    </div>
+                    <div class="form-group">
+                        <label>Longitud A:</label>
+                        <input type="number" id="lonA" step="0.000001" placeholder="Ej: -58.3816">
+                    </div>
+                    <div class="form-group">
+                        <label>Latitud B:</label>
+                        <input type="number" id="latB" step="0.000001" placeholder="Ej: -34.6037">
+                    </div>
+                    <div class="form-group">
+                        <label>Longitud B:</label>
+                        <input type="number" id="lonB" step="0.000001" placeholder="Ej: -58.3816">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-cogs"></i> Parámetros Técnicos</h3>
+                    <div class="form-group">
+                        <label>Banda de Frecuencia:</label>
+                        <select id="frequencyBand">
+                            <option value="6">6 GHz - Banda C</option>
+                            <option value="8">8 GHz - Banda X</option>
+                            <option value="15">15 GHz - Banda Ku</option>
+                            <option value="18">18 GHz - Banda K</option>
+                            <option value="23">23 GHz - Banda K</option>
+                            <option value="26">26 GHz - Banda Ka</option>
+                            <option value="38">38 GHz - Banda Ka</option>
+                            <option value="60">60 GHz - Banda V</option>
+                            <option value="80">80 GHz - Banda E</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Ancho de Canal (MHz):</label>
+                        <select id="channelWidth">
+                            <option value="7">7 MHz</option>
+                            <option value="14">14 MHz</option>
+                            <option value="28" selected>28 MHz</option>
+                            <option value="56">56 MHz</option>
+                            <option value="112">112 MHz</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Potencia TX (dBm):</label>
+                        <input type="number" id="powerTX" step="0.1" value="20" placeholder="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Modulación:</label>
+                        <select id="modulation">
+                            <option value="QPSK">QPSK</option>
+                            <option value="16QAM" selected>16QAM</option>
+                            <option value="64QAM">64QAM</option>
+                            <option value="256QAM">256QAM</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-cloud"></i> Condiciones Ambientales</h3>
+                    <div class="form-group">
+                        <label>Clima:</label>
+                        <select id="climate">
+                            <option value="tropical">Tropical</option>
+                            <option value="temperate" selected>Templado</option>
+                            <option value="arid">Árido</option>
+                            <option value="cold">Frío</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Altura Torre A (m):</label>
+                        <input type="number" id="heightA" step="0.1" value="30" placeholder="30">
+                    </div>
+                    <div class="form-group">
+                        <label>Altura Torre B (m):</label>
+                        <input type="number" id="heightB" step="0.1" value="30" placeholder="30">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-clipboard-list"></i> Requisitos</h3>
+                    <div class="form-group">
+                        <label>Disponibilidad Objetivo (%):</label>
+                        <input type="number" id="availability" step="0.01" value="99.99" placeholder="99.99">
+                    </div>
+                    <div class="form-group">
+                        <label>Capacidad Requerida (Mbps):</label>
+                        <input type="number" id="capacity" step="1" value="100" placeholder="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Notas Adicionales:</label>
+                        <textarea id="notes" placeholder="Información adicional sobre el enlace..."></textarea>
+                    </div>
+                </div>
+
+                <button class="btn-plan" onclick="planificarEnlace()">
+                    <i class="fas fa-magic"></i> Planificar Enlace
+                </button>
+            </div>
+
+            <div class="results-panel">
+                <div class="results-tabs">
+                    <button class="tab active" onclick="showTab('resumen')">Resumen</button>
+                    <button class="tab" onclick="showTab('frecuencias')">Coordinación</button>
+                    <button class="tab" onclick="showTab('interferencias')">Interferencias</button>
+                    <button class="tab" onclick="showTab('regulacion')">Regulación</button>
+                    <button class="tab" onclick="showTab('optimizacion')">Optimización</button>
+                </div>
+
+                <div id="resumen" class="tab-content active">
+                    <div class="planning-grid">
+                        <div class="planning-card">
+                            <div class="planning-value" id="distanciaPlan">-</div>
+                            <div class="planning-label">Distancia (km)</div>
+                        </div>
+                        <div class="planning-card">
+                            <div class="planning-value" id="pathLossPlan">-</div>
+                            <div class="planning-label">Path Loss (dB)</div>
+                        </div>
+                        <div class="planning-card">
+                            <div class="planning-value" id="margenPlan">-</div>
+                            <div class="planning-label">Margen Fading (dB)</div>
+                        </div>
+                        <div class="planning-card">
+                            <div class="planning-value" id="disponibilidadPlan">-</div>
+                            <div class="planning-label">Disponibilidad (%)</div>
+                        </div>
+                        <div class="planning-card">
+                            <div class="planning-value" id="capacidadPlan">-</div>
+                            <div class="planning-label">Capacidad (Mbps)</div>
+                        </div>
+                        <div class="planning-card">
+                            <div class="planning-value" id="factibilidadPlan">-</div>
+                            <div class="planning-label">Factibilidad</div>
+                        </div>
+                    </div>
+                    <div id="chartResumenPlan" class="chart-container"></div>
+                </div>
+
+                <div id="frecuencias" class="tab-content">
+                    <div class="frequency-coordination">
+                        <div class="coordination-title">Coordinación de Frecuencias</div>
+                        <div class="frequency-list" id="frequencyList">
+                            <!-- Las frecuencias se generarán dinámicamente -->
+                        </div>
+                    </div>
+                    <div id="chartFrecuencias" class="chart-container"></div>
+                </div>
+
+                <div id="interferencias" class="tab-content">
+                    <div class="interference-analysis">
+                        <div class="coordination-title">Análisis de Interferencias</div>
+                        <div id="interferenceList">
+                            <!-- Las interferencias se generarán dinámicamente -->
+                        </div>
+                    </div>
+                    <div id="chartInterferencias" class="chart-container"></div>
+                </div>
+
+                <div id="regulacion" class="tab-content">
+                    <div id="regulatoryContent">
+                        <!-- Contenido regulatorio se generará dinámicamente -->
+                    </div>
+                </div>
+
+                <div id="optimizacion" class="tab-content">
+                    <div id="optimizationContent">
+                        <!-- Contenido de optimización se generará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        class ToastManager {
+            static show(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                
+                const icon = type === 'success' ? 'fas fa-check-circle' :
+                            type === 'error' ? 'fas fa-exclamation-circle' :
+                            type === 'warning' ? 'fas fa-exclamation-triangle' :
+                            'fas fa-info-circle';
+                
+                const color = type === 'success' ? '#27ae60' : 
+                             type === 'error' ? '#e74c3c' : 
+                             type === 'warning' ? '#f39c12' : '#3498db';
+                
+                toast.innerHTML = `
+                    <i class="${icon}" style="color: ${color}"></i>
+                    <span>${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 5000);
+            }
+        }
+
+        class LoadingManager {
+            static show() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+            
+            static hide() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function planificarEnlace() {
+            LoadingManager.show();
+            
+            try {
+                const linkName = document.getElementById('linkName').value;
+                const latA = parseFloat(document.getElementById('latA').value);
+                const lonA = parseFloat(document.getElementById('lonA').value);
+                const latB = parseFloat(document.getElementById('latB').value);
+                const lonB = parseFloat(document.getElementById('lonB').value);
+                const frequency = parseFloat(document.getElementById('frequencyBand').value);
+                const channelWidth = parseFloat(document.getElementById('channelWidth').value);
+                const powerTX = parseFloat(document.getElementById('powerTX').value);
+                const modulation = document.getElementById('modulation').value;
+                const climate = document.getElementById('climate').value;
+                const heightA = parseFloat(document.getElementById('heightA').value);
+                const heightB = parseFloat(document.getElementById('heightB').value);
+                const availability = parseFloat(document.getElementById('availability').value);
+                const capacity = parseFloat(document.getElementById('capacity').value);
+
+                if (!latA || !lonA || !latB || !lonB || !heightA || !heightB) {
+                    throw new Error('Por favor complete todos los campos requeridos');
+                }
+
+                // Calcular distancia
+                const distance = calcularDistancia(latA, lonA, latB, lonB);
+                
+                // Calcular path loss usando funciones específicas de microondas
+                const pathLoss = FANGIO_UTILS.calculateMicrowavePathLoss(distance, frequency, heightA, heightB, climate);
+                
+                // Calcular margen de fading
+                const fadeMargin = FANGIO_UTILS.calculateMicrowaveFadeMargin(distance, frequency, climate);
+                
+                // Calcular disponibilidad real
+                const realAvailability = FANGIO_UTILS.calculateMicrowaveAvailability(distance, frequency, climate);
+                
+                // Calcular capacidad teórica
+                const theoreticalCapacity = calcularCapacidadTeorica(channelWidth, modulation);
+                
+                // Evaluar factibilidad
+                const feasibility = evaluarFactibilidad(distance, frequency, realAvailability, theoreticalCapacity, capacity);
+                
+                // Actualizar métricas
+                document.getElementById('distanciaPlan').textContent = distance.toFixed(2) + ' km';
+                document.getElementById('pathLossPlan').textContent = pathLoss.toFixed(1) + ' dB';
+                document.getElementById('margenPlan').textContent = fadeMargin.toFixed(1) + ' dB';
+                document.getElementById('disponibilidadPlan').textContent = realAvailability.toFixed(3) + '%';
+                document.getElementById('capacidadPlan').textContent = theoreticalCapacity.toFixed(0) + ' Mbps';
+                document.getElementById('factibilidadPlan').textContent = feasibility;
+                
+                // Generar análisis de frecuencias
+                generarAnalisisFrecuencias(frequency, distance);
+                
+                // Generar análisis de interferencias
+                generarAnalisisInterferencias(frequency, distance, powerTX);
+                
+                // Generar contenido regulatorio
+                generarContenidoRegulatorio(frequency, distance);
+                
+                // Generar optimizaciones
+                generarOptimizaciones(distance, frequency, capacity);
+                
+                // Generar gráficos
+                generarGraficosPlanificacion(distance, frequency, pathLoss, fadeMargin, realAvailability);
+                
+                ToastManager.show('Planificación completada exitosamente', 'success');
+                
+            } catch (error) {
+                ToastManager.show(error.message, 'error');
+            } finally {
+                LoadingManager.hide();
+            }
+        }
+
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radio de la Tierra en km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                     Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function calcularCapacidadTeorica(channelWidth, modulation) {
+            const spectralEfficiency = {
+                'QPSK': 2,
+                '16QAM': 4,
+                '64QAM': 6,
+                '256QAM': 8
+            };
+            
+            return channelWidth * spectralEfficiency[modulation];
+        }
+
+        function evaluarFactibilidad(distance, frequency, availability, capacity, requiredCapacity) {
+            const bands = FANGIO_CONFIG.MICROWAVE.FREQUENCY_BANDS;
+            const bandKey = frequency + 'GHz';
+            const maxDistance = bands[bandKey] ? bands[bandKey].maxDistance : 100;
+            
+            if (distance > maxDistance) return 'No Factible - Distancia';
+            if (availability < 99.5) return 'No Factible - Disponibilidad';
+            if (capacity < requiredCapacity) return 'No Factible - Capacidad';
+            
+            return 'Factible';
+        }
+
+        function generarAnalisisFrecuencias(frequency, distance) {
+            const frequencyList = document.getElementById('frequencyList');
+            frequencyList.innerHTML = '';
+            
+            const bands = FANGIO_CONFIG.MICROWAVE.FREQUENCY_BANDS;
+            const selectedBand = frequency + 'GHz';
+            
+            Object.entries(bands).forEach(([band, config]) => {
+                const item = document.createElement('div');
+                const isSelected = band === selectedBand;
+                const isSuitable = distance <= config.maxDistance;
+                
+                let status = 'frequency-available';
+                if (isSelected) {
+                    status = isSuitable ? 'frequency-available' : 'frequency-warning';
+                } else if (!isSuitable) {
+                    status = 'frequency-occupied';
+                }
+                
+                item.className = `frequency-item ${status}`;
+                item.innerHTML = `
+                    <div>
+                        <strong>${band}</strong><br>
+                        <small>${config.description}</small>
+                    </div>
+                    <div>
+                        <small>Max: ${config.maxDistance} km</small>
+                    </div>
+                `;
+                
+                frequencyList.appendChild(item);
+            });
+            
+            // Generar gráfico de frecuencias
+            const frequencies = Object.keys(bands).map(band => parseFloat(band.replace('GHz', '')));
+            const maxDistances = Object.values(bands).map(config => config.maxDistance);
+            
+            const trace = {
+                x: frequencies,
+                y: maxDistances,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Distancia Máxima',
+                line: { color: '#3498db', width: 3 }
+            };
+            
+            const layout = {
+                title: 'Distancia Máxima por Banda de Frecuencia',
+                xaxis: { title: 'Frecuencia (GHz)' },
+                yaxis: { title: 'Distancia Máxima (km)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartFrecuencias', [trace], layout);
+        }
+
+        function generarAnalisisInterferencias(frequency, distance, powerTX) {
+            const interferenceList = document.getElementById('interferenceList');
+            interferenceList.innerHTML = '';
+            
+            // Simular interferencias
+            const interferences = [
+                {
+                    source: 'Enlace MW-001',
+                    frequency: frequency + 0.5,
+                    distance: distance * 0.8,
+                    level: 'low',
+                    description: 'Interferencia por canal adyacente'
+                },
+                {
+                    source: 'Enlace MW-002',
+                    frequency: frequency - 0.3,
+                    distance: distance * 1.2,
+                    level: 'medium',
+                    description: 'Interferencia por canal cercano'
+                },
+                {
+                    source: 'Enlace MW-003',
+                    frequency: frequency + 1.2,
+                    distance: distance * 0.6,
+                    level: 'high',
+                    description: 'Interferencia por canal próximo'
+                }
+            ];
+            
+            interferences.forEach(interference => {
+                const item = document.createElement('div');
+                item.className = 'interference-item';
+                
+                item.innerHTML = `
+                    <div class="interference-header">
+                        <div class="interference-title">${interference.source}</div>
+                        <div class="interference-level level-${interference.level}">${interference.level.toUpperCase()}</div>
+                    </div>
+                    <div>Frecuencia: ${interference.frequency} GHz</div>
+                    <div>Distancia: ${interference.distance.toFixed(1)} km</div>
+                    <div>${interference.description}</div>
+                `;
+                
+                interferenceList.appendChild(item);
+            });
+            
+            // Generar gráfico de interferencias
+            const frequencies = interferences.map(i => i.frequency);
+            const levels = interferences.map(i => i.level === 'low' ? -60 : i.level === 'medium' ? -40 : -20);
+            
+            const trace = {
+                x: frequencies,
+                y: levels,
+                type: 'scatter',
+                mode: 'markers',
+                name: 'Nivel de Interferencia',
+                marker: {
+                    color: levels.map(l => l < -50 ? '#27ae60' : l < -30 ? '#f39c12' : '#e74c3c'),
+                    size: 15
+                }
+            };
+            
+            const layout = {
+                title: 'Análisis de Interferencias',
+                xaxis: { title: 'Frecuencia (GHz)' },
+                yaxis: { title: 'Nivel (dBm)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartInterferencias', [trace], layout);
+        }
+
+        function generarContenidoRegulatorio(frequency, distance) {
+            const content = document.getElementById('regulatoryContent');
+            
+            const regulatoryInfo = {
+                '6GHz': {
+                    license: 'Requerida',
+                    authority: 'Autoridad Nacional de Telecomunicaciones',
+                    restrictions: 'Uso compartido con servicios satelitales',
+                    coordination: 'Coordinación internacional requerida'
+                },
+                '8GHz': {
+                    license: 'Requerida',
+                    authority: 'Autoridad Nacional de Telecomunicaciones',
+                    restrictions: 'Uso exclusivo para servicios fijos',
+                    coordination: 'Coordinación nacional requerida'
+                },
+                '15GHz': {
+                    license: 'Requerida',
+                    authority: 'Autoridad Nacional de Telecomunicaciones',
+                    restrictions: 'Uso compartido con servicios móviles',
+                    coordination: 'Coordinación regional requerida'
+                }
+            };
+            
+            const info = regulatoryInfo[frequency] || regulatoryInfo['8GHz'];
+            
+            content.innerHTML = `
+                <div style="background: rgba(52, 152, 219, 0.1); border-radius: 15px; padding: 20px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">Información Regulatoria - ${frequency} GHz</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="background: white; padding: 15px; border-radius: 8px;">
+                            <strong>Licencia:</strong> ${info.license}
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px;">
+                            <strong>Autoridad:</strong> ${info.authority}
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px;">
+                            <strong>Restricciones:</strong> ${info.restrictions}
+                        </div>
+                        <div style="background: white; padding: 15px; border-radius: 8px;">
+                            <strong>Coordinación:</strong> ${info.coordination}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generarOptimizaciones(distance, frequency, capacity) {
+            const content = document.getElementById('optimizationContent');
+            
+            const optimizations = [];
+            
+            if (distance > 50) {
+                optimizations.push('Considerar uso de repetidores intermedios');
+            }
+            
+            if (frequency > 20) {
+                optimizations.push('Implementar diversidad de espacio');
+            }
+            
+            if (capacity > 500) {
+                optimizations.push('Considerar agregación de enlaces');
+            }
+            
+            optimizations.push('Optimizar altura de antenas');
+            optimizations.push('Implementar control de potencia adaptativo');
+            optimizations.push('Considerar polarización dual');
+            
+            content.innerHTML = `
+                <div style="background: rgba(39, 174, 96, 0.1); border-radius: 15px; padding: 20px;">
+                    <h3 style="color: #2c3e50; margin-bottom: 15px;">Recomendaciones de Optimización</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        ${optimizations.map(opt => `
+                            <li style="background: white; padding: 10px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid #27ae60;">
+                                <i class="fas fa-lightbulb" style="color: #f39c12; margin-right: 8px;"></i>
+                                ${opt}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        function generarGraficosPlanificacion(distance, frequency, pathLoss, fadeMargin, availability) {
+            // Gráfico de resumen
+            const traceResumen = {
+                x: ['Distancia', 'Path Loss', 'Margen Fading', 'Disponibilidad'],
+                y: [distance, pathLoss, fadeMargin, availability],
+                type: 'bar',
+                marker: {
+                    color: ['#3498db', '#e74c3c', '#f39c12', '#27ae60']
+                }
+            };
+            
+            const layoutResumen = {
+                title: 'Resumen de Planificación',
+                yaxis: { title: 'Valor' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartResumenPlan', [traceResumen], layoutResumen);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            ToastManager.show('Planificador de Enlaces Microondas cargado', 'info');
+        });
+    </script>
+</body>
+</html> 

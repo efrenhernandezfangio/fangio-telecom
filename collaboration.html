@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colaboración en Tiempo Real - FANGIO Link Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .collaboration-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(45deg, #00d4aa, #0099cc);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        .sync-indicator {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        .workspace {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f8f9fa;
+        }
+
+        .workspace-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .workspace-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #00d4aa, #00b894);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ffa502, #ff9500);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .link-form {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-group.valid input {
+            border-color: #00d4aa;
+        }
+
+        .form-group.invalid input {
+            border-color: #ff4757;
+        }
+
+        .validation-message {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #6c757d;
+        }
+
+        .validation-message.error {
+            color: #ff4757;
+        }
+
+        .validation-message.success {
+            color: #00d4aa;
+        }
+
+        .links-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .links-table th,
+        .links-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .links-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .links-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-maintenance {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .sidebar-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .user-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00d4aa;
+        }
+
+        .activity-feed {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .activity-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+        }
+
+        .activity-icon.create { background: #00d4aa; }
+        .activity-icon.edit { background: #007bff; }
+        .activity-icon.delete { background: #ff4757; }
+        .activity-icon.comment { background: #ffa502; }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .conflicts-panel {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+
+        .conflicts-panel .sidebar-title {
+            color: white;
+        }
+
+        .conflict-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .conflict-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .conflict-description {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .conflict-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .chat-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .message-content {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 10px;
+            border-left: 4px solid #007bff;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .chat-input input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(100%);
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        .toast.success { border-left: 4px solid #00d4aa; }
+        .toast.error { border-left: 4px solid #ff4757; }
+        .toast.warning { border-left: 4px solid #ffa502; }
+        .toast.info { border-left: 4px solid #74b9ff; }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #00d4aa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .workspace-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="collaboration-container">
+        <div class="header">
+            <h1><i class="fas fa-users"></i> Colaboración en Tiempo Real</h1>
+            <div class="sync-status">
+                <div class="sync-indicator"></div>
+                Sincronización Activa
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="workspace">
+                <div class="workspace-header">
+                    <h2 class="workspace-title">Proyecto: Red Principal</h2>
+                    <div class="workspace-actions">
+                        <button class="btn btn-success" onclick="collaborationSystem.saveProject()">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                        <button class="btn btn-primary" onclick="collaborationSystem.exportProject()">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                        <button class="btn btn-warning" onclick="collaborationSystem.inviteUser()">
+                            <i class="fas fa-user-plus"></i> Invitar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="link-form">
+                    <h3>Agregar Nuevo Enlace</h3>
+                    <form id="linkForm">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="linkName">Nombre del Enlace</label>
+                                <input type="text" id="linkName" placeholder="PT-001" required>
+                                <div class="validation-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="siteA">Sitio A</label>
+                                <input type="text" id="siteA" placeholder="Torre Norte" required>
+                                <div class="validation-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="siteB">Sitio B</label>
+                                <input type="text" id="siteB" placeholder="Torre Sur" required>
+                                <div class="validation-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="frequency">Frecuencia (GHz)</label>
+                                <select id="frequency" required>
+                                    <option value="">Seleccionar</option>
+                                    <option value="2.4">2.4 GHz</option>
+                                    <option value="5.8">5.8 GHz</option>
+                                    <option value="6">6 GHz</option>
+                                    <option value="24">24 GHz</option>
+                                </select>
+                                <div class="validation-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="distance">Distancia (km)</label>
+                                <input type="number" id="distance" placeholder="5.2" step="0.1" required>
+                                <div class="validation-message"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="status">Estado</label>
+                                <select id="status" required>
+                                    <option value="">Seleccionar</option>
+                                    <option value="active">Activo</option>
+                                    <option value="inactive">Inactivo</option>
+                                    <option value="maintenance">Mantenimiento</option>
+                                </select>
+                                <div class="validation-message"></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+                            <i class="fas fa-plus"></i> Agregar Enlace
+                        </button>
+                    </form>
+                </div>
+
+                <div class="links-section">
+                    <h3>Enlaces del Proyecto</h3>
+                    <table class="links-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Sitio A</th>
+                                <th>Sitio B</th>
+                                <th>Frecuencia</th>
+                                <th>Distancia</th>
+                                <th>Estado</th>
+                                <th>Última Modificación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linksTableBody">
+                            <!-- Los enlaces se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- Usuarios Conectados -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-users"></i>
+                        Usuarios Conectados
+                    </h3>
+                    <div class="users-list" id="usersList">
+                        <!-- Los usuarios se cargarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Actividad Reciente -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-history"></i>
+                        Actividad Reciente
+                    </h3>
+                    <div class="activity-feed" id="activityFeed">
+                        <!-- La actividad se cargará dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Conflictos -->
+                <div class="sidebar-card conflicts-panel">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Conflictos de Sincronización
+                    </h3>
+                    <div id="conflictsContainer">
+                        <!-- Los conflictos se mostrarán dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Chat de Colaboración -->
+                <div class="sidebar-card">
+                    <h3 class="sidebar-title">
+                        <i class="fas fa-comments"></i>
+                        Chat de Proyecto
+                    </h3>
+                    <div class="chat-container" id="chatContainer">
+                        <!-- Los mensajes se cargarán dinámicamente -->
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Escribe un mensaje...">
+                        <button class="btn btn-primary" onclick="collaborationSystem.sendMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clases de utilidad
+        class ToastManager {
+            constructor() {
+                this.container = document.getElementById('toastContainer');
+            }
+
+            show(message, type = 'info', duration = 5000) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icon = this.getIcon(type);
+                toast.innerHTML = `
+                    <i class="fas ${icon}"></i>
+                    <span>${message}</span>
+                `;
+
+                this.container.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        this.container.removeChild(toast);
+                    }, 300);
+                }, duration);
+            }
+
+            getIcon(type) {
+                const icons = {
+                    success: 'fa-check-circle',
+                    error: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+                return icons[type] || icons.info;
+            }
+        }
+
+        class LoadingManager {
+            constructor() {
+                this.overlay = document.getElementById('loadingOverlay');
+            }
+
+            show() {
+                this.overlay.style.display = 'flex';
+            }
+
+            hide() {
+                this.overlay.style.display = 'none';
+            }
+        }
+
+        class CollaborationSystem {
+            constructor() {
+                this.toast = new ToastManager();
+                this.loading = new LoadingManager();
+                this.currentUser = {
+                    id: 'user_' + Math.random().toString(36).substr(2, 9),
+                    name: 'Usuario ' + Math.floor(Math.random() * 1000),
+                    role: 'engineer',
+                    avatar: this.getInitials('Usuario ' + Math.floor(Math.random() * 1000))
+                };
+                this.users = [];
+                this.links = [];
+                this.activity = [];
+                this.conflicts = [];
+                this.chat = [];
+                this.init();
+            }
+
+            async init() {
+                this.loading.show();
+                
+                try {
+                    await this.loadInitialData();
+                    this.setupEventListeners();
+                    this.startRealTimeSync();
+                    this.toast.show('Sistema de colaboración iniciado', 'success');
+                } catch (error) {
+                    this.toast.show('Error al iniciar colaboración: ' + error.message, 'error');
+                } finally {
+                    this.loading.hide();
+                }
+            }
+
+            async loadInitialData() {
+                // Simular carga de datos iniciales
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Datos de ejemplo
+                this.users = [
+                    { id: 'user1', name: 'Ana García', role: 'admin', avatar: 'AG', status: 'online' },
+                    { id: 'user2', name: 'Carlos López', role: 'engineer', avatar: 'CL', status: 'online' },
+                    { id: 'user3', name: 'María Rodríguez', role: 'viewer', avatar: 'MR', status: 'away' }
+                ];
+
+                this.links = [
+                    { id: 'link1', name: 'PT-001', siteA: 'Torre Norte', siteB: 'Torre Sur', frequency: '5.8', distance: '3.2', status: 'active', lastModified: '2024-01-15 14:30', modifiedBy: 'Ana García' },
+                    { id: 'link2', name: 'PT-002', siteA: 'Edificio A', siteB: 'Edificio B', frequency: '2.4', distance: '1.8', status: 'active', lastModified: '2024-01-15 13:45', modifiedBy: 'Carlos López' },
+                    { id: 'link3', name: 'PT-003', siteA: 'Centro Comercial', siteB: 'Oficinas', frequency: '6', distance: '2.1', status: 'maintenance', lastModified: '2024-01-15 12:20', modifiedBy: 'María Rodríguez' }
+                ];
+
+                this.activity = [
+                    { id: 'act1', type: 'create', user: 'Ana García', description: 'Creó enlace PT-001', time: '14:30' },
+                    { id: 'act2', type: 'edit', user: 'Carlos López', description: 'Modificó frecuencia PT-002', time: '13:45' },
+                    { id: 'act3', type: 'comment', user: 'María Rodríguez', description: 'Comentó en PT-003', time: '12:20' }
+                ];
+
+                this.chat = [
+                    { id: 'msg1', user: 'Ana García', message: 'Hola equipo, ¿cómo va el proyecto?', time: '14:25' },
+                    { id: 'msg2', user: 'Carlos López', message: 'Todo bien, terminando la configuración de PT-002', time: '14:28' },
+                    { id: 'msg3', user: 'María Rodríguez', message: 'Necesito revisar los datos de PT-003', time: '14:30' }
+                ];
+
+                this.updateUI();
+            }
+
+            setupEventListeners() {
+                document.getElementById('linkForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addLink();
+                });
+
+                document.getElementById('chatInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            addLink() {
+                const formData = new FormData(document.getElementById('linkForm'));
+                const linkData = {
+                    id: 'link_' + Date.now(),
+                    name: document.getElementById('linkName').value,
+                    siteA: document.getElementById('siteA').value,
+                    siteB: document.getElementById('siteB').value,
+                    frequency: document.getElementById('frequency').value,
+                    distance: document.getElementById('distance').value,
+                    status: document.getElementById('status').value,
+                    lastModified: new Date().toLocaleString(),
+                    modifiedBy: this.currentUser.name
+                };
+
+                this.links.push(linkData);
+                this.addActivity('create', `Creó enlace ${linkData.name}`);
+                this.updateUI();
+                this.syncData();
+                
+                document.getElementById('linkForm').reset();
+                this.toast.show('Enlace agregado exitosamente', 'success');
+            }
+
+            updateUI() {
+                this.updateUsersList();
+                this.updateLinksTable();
+                this.updateActivityFeed();
+                this.updateChat();
+                this.updateConflicts();
+            }
+
+            updateUsersList() {
+                const container = document.getElementById('usersList');
+                container.innerHTML = this.users.map(user => `
+                    <div class="user-item">
+                        <div class="user-avatar">${user.avatar}</div>
+                        <div class="user-info">
+                            <div class="user-name">${user.name}</div>
+                            <div class="user-role">${user.role}</div>
+                        </div>
+                        <div class="user-status"></div>
+                    </div>
+                `).join('');
+            }
+
+            updateLinksTable() {
+                const container = document.getElementById('linksTableBody');
+                container.innerHTML = this.links.map(link => `
+                    <tr>
+                        <td>${link.name}</td>
+                        <td>${link.siteA}</td>
+                        <td>${link.siteB}</td>
+                        <td>${link.frequency} GHz</td>
+                        <td>${link.distance} km</td>
+                        <td><span class="status-badge status-${link.status}">${link.status}</span></td>
+                        <td>${link.lastModified}<br><small>por ${link.modifiedBy}</small></td>
+                        <td>
+                            <button class="btn btn-primary btn-small" onclick="collaborationSystem.editLink('${link.id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-warning btn-small" onclick="collaborationSystem.deleteLink('${link.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            updateActivityFeed() {
+                const container = document.getElementById('activityFeed');
+                container.innerHTML = this.activity.map(act => `
+                    <div class="activity-item">
+                        <div class="activity-icon ${act.type}">
+                            <i class="fas ${this.getActivityIcon(act.type)}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text"><strong>${act.user}</strong> ${act.description}</div>
+                            <div class="activity-time">${act.time}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateChat() {
+                const container = document.getElementById('chatContainer');
+                container.innerHTML = this.chat.map(msg => `
+                    <div class="chat-message">
+                        <div class="message-header">
+                            <span class="message-author">${msg.user}</span>
+                            <span class="message-time">${msg.time}</span>
+                        </div>
+                        <div class="message-content">${msg.message}</div>
+                    </div>
+                `).join('');
+                container.scrollTop = container.scrollHeight;
+            }
+
+            updateConflicts() {
+                const container = document.getElementById('conflictsContainer');
+                if (this.conflicts.length === 0) {
+                    container.innerHTML = '<p style="opacity: 0.8;">No hay conflictos de sincronización</p>';
+                } else {
+                    container.innerHTML = this.conflicts.map(conflict => `
+                        <div class="conflict-item">
+                            <div class="conflict-title">${conflict.title}</div>
+                            <div class="conflict-description">${conflict.description}</div>
+                            <div class="conflict-actions">
+                                <button class="btn btn-success btn-small" onclick="collaborationSystem.resolveConflict('${conflict.id}', 'accept')">
+                                    Aceptar
+                                </button>
+                                <button class="btn btn-warning btn-small" onclick="collaborationSystem.resolveConflict('${conflict.id}', 'reject')">
+                                    Rechazar
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            sendMessage() {
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                
+                if (message) {
+                    const chatMessage = {
+                        id: 'msg_' + Date.now(),
+                        user: this.currentUser.name,
+                        message: message,
+                        time: new Date().toLocaleTimeString()
+                    };
+                    
+                    this.chat.push(chatMessage);
+                    this.updateChat();
+                    this.syncData();
+                    
+                    input.value = '';
+                    this.toast.show('Mensaje enviado', 'success');
+                }
+            }
+
+            addActivity(type, description) {
+                const activity = {
+                    id: 'act_' + Date.now(),
+                    type: type,
+                    user: this.currentUser.name,
+                    description: description,
+                    time: new Date().toLocaleTimeString()
+                };
+                
+                this.activity.unshift(activity);
+                if (this.activity.length > 20) {
+                    this.activity.pop();
+                }
+            }
+
+            getActivityIcon(type) {
+                const icons = {
+                    create: 'fa-plus',
+                    edit: 'fa-edit',
+                    delete: 'fa-trash',
+                    comment: 'fa-comment'
+                };
+                return icons[type] || 'fa-info';
+            }
+
+            getInitials(name) {
+                return name.split(' ').map(n => n[0]).join('').toUpperCase();
+            }
+
+            startRealTimeSync() {
+                // Simular sincronización en tiempo real
+                setInterval(() => {
+                    this.syncData();
+                }, 5000);
+
+                // Simular actividad de otros usuarios
+                setInterval(() => {
+                    this.simulateOtherUserActivity();
+                }, 10000);
+            }
+
+            syncData() {
+                // Simular sincronización con el servidor
+                console.log('Sincronizando datos...');
+            }
+
+            simulateOtherUserActivity() {
+                const activities = [
+                    'Revisó configuración de enlaces',
+                    'Actualizó documentación',
+                    'Comentó en el proyecto',
+                    'Exportó reporte'
+                ];
+                
+                const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+                const randomUser = this.users[Math.floor(Math.random() * this.users.length)];
+                
+                this.addActivity('edit', randomActivity);
+                this.updateActivityFeed();
+            }
+
+            editLink(linkId) {
+                const link = this.links.find(l => l.id === linkId);
+                if (link) {
+                    // Implementar edición
+                    this.toast.show(`Editando enlace ${link.name}`, 'info');
+                }
+            }
+
+            deleteLink(linkId) {
+                const link = this.links.find(l => l.id === linkId);
+                if (link && confirm(`¿Estás seguro de eliminar el enlace ${link.name}?`)) {
+                    this.links = this.links.filter(l => l.id !== linkId);
+                    this.addActivity('delete', `Eliminó enlace ${link.name}`);
+                    this.updateUI();
+                    this.syncData();
+                    this.toast.show('Enlace eliminado', 'success');
+                }
+            }
+
+            saveProject() {
+                this.toast.show('Proyecto guardado exitosamente', 'success');
+            }
+
+            exportProject() {
+                this.toast.show('Exportando proyecto...', 'info');
+                setTimeout(() => {
+                    this.toast.show('Proyecto exportado', 'success');
+                }, 2000);
+            }
+
+            inviteUser() {
+                this.toast.show('Funcionalidad de invitación en desarrollo', 'info');
+            }
+
+            resolveConflict(conflictId, action) {
+                this.conflicts = this.conflicts.filter(c => c.id !== conflictId);
+                this.updateConflicts();
+                this.toast.show(`Conflicto ${action === 'accept' ? 'aceptado' : 'rechazado'}`, 'success');
+            }
+        }
+
+        // Inicializar sistema de colaboración
+        let collaborationSystem;
+        document.addEventListener('DOMContentLoaded', () => {
+            collaborationSystem = new CollaborationSystem();
+        });
+    </script>
+</body>
+</html> 

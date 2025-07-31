@@ -1,0 +1,761 @@
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico del Mapa - Fangio Telecom</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0b111f 0%, #1a2332 100%);
+            color: #e0f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 230, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 230, 255, 0.3);
+        }
+
+        .header h1 {
+            color: #00e6ff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #b0bec5;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            background: rgba(11, 17, 31, 0.8);
+            border: 1px solid rgba(0, 230, 255, 0.2);
+            border-radius: 15px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 230, 255, 0.1);
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, rgba(0, 230, 255, 0.1), rgba(11, 17, 31, 0.9));
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 230, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-header i {
+            color: #00e6ff;
+            font-size: 1.5rem;
+        }
+
+        .section-header h2 {
+            color: #00e6ff;
+            margin: 0;
+            font-size: 1.4rem;
+        }
+
+        .section-content {
+            padding: 25px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00e6ff, #0099cc);
+            color: #0b111f;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 230, 255, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+        }
+
+        .map-container {
+            width: 100%;
+            height: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid rgba(0, 230, 255, 0.3);
+            margin: 20px 0;
+        }
+
+        .log-area {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 230, 255, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin: 15px 0;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .log-entry.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-left: 3px solid #10b981;
+        }
+
+        .log-entry.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-left: 3px solid #ef4444;
+        }
+
+        .log-entry.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border-left: 3px solid #f59e0b;
+        }
+
+        .log-entry.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
+
+        .status.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border: 1px solid #f59e0b;
+        }
+
+        .status.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border: 1px solid #3b82f6;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0, 230, 255, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(0, 230, 255, 0.1);
+            color: #00e6ff;
+            font-weight: 600;
+        }
+
+        .data-table tr:hover {
+            background: rgba(0, 230, 255, 0.05);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00e6ff, #0099cc);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .error-banner {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .error-banner i {
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .map-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-map-marked-alt"></i> Diagnóstico del Mapa</h1>
+            <p>Herramienta de diagnóstico para el sistema de enlaces microondas Fangio Telecom</p>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-map"></i>
+                <h2>Pruebas del Mapa</h2>
+            </div>
+            <div class="section-content">
+                <button class="btn btn-success" onclick="testMapa()">
+                    <i class="fas fa-map"></i> Probar Mapa Simple
+                </button>
+                <button class="btn btn-warning" onclick="testMapaCompleto()">
+                    <i class="fas fa-layer-group"></i> Probar Mapa Completo
+                </button>
+                <button class="btn btn-danger" onclick="limpiarMapa()">
+                    <i class="fas fa-trash"></i> Limpiar Mapa
+                </button>
+                
+                <div class="map-container">
+                    <div id="mapa-test" style="width: 100%; height: 100%;"></div>
+                </div>
+                
+                <div id="error-banner" class="error-banner" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="error-message"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-chart-bar"></i>
+                <h2>Análisis de Datos</h2>
+            </div>
+            <div class="section-content">
+                <button class="btn btn-info" onclick="analizarDatosEnlaces()">
+                    <i class="fas fa-table"></i> Analizar Datos de Enlaces
+                </button>
+                <button class="btn btn-info" onclick="verificarCoordenadas()">
+                    <i class="fas fa-map-marker-alt"></i> Verificar Coordenadas
+                </button>
+                
+                <div id="datos-tabla"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <i class="fas fa-tools"></i>
+                <h2>Diagnóstico Completo</h2>
+            </div>
+            <div class="section-content">
+                <button class="btn btn-success" onclick="diagnosticoCompleto()">
+                    <i class="fas fa-play"></i> Ejecutar Diagnóstico Completo
+                </button>
+                <button class="btn btn-warning" onclick="limpiarLog()">
+                    <i class="fas fa-broom"></i> Limpiar Log
+                </button>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                
+                <div class="log-area" id="log-area">
+                    <div class="log-entry info">
+                        <i class="fas fa-info-circle"></i> Sistema de diagnóstico iniciado. Haz clic en "Ejecutar Diagnóstico Completo" para comenzar.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        let mapaTest = null;
+        let datosEnlaces = [];
+
+        function agregarLog(mensaje, tipo = 'info') {
+            const logArea = document.getElementById('log-area');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${tipo}`;
+            
+            const icon = tipo === 'success' ? 'check-circle' : 
+                        tipo === 'error' ? 'exclamation-triangle' : 
+                        tipo === 'warning' ? 'exclamation-circle' : 'info-circle';
+            
+            logEntry.innerHTML = `<i class="fas fa-${icon}"></i> ${mensaje}`;
+            logArea.appendChild(logEntry);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        function actualizarProgreso(porcentaje) {
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = porcentaje + '%';
+        }
+
+        function mostrarError(mensaje) {
+            const errorBanner = document.getElementById('error-banner');
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = mensaje;
+            errorBanner.style.display = 'flex';
+        }
+
+        function ocultarError() {
+            document.getElementById('error-banner').style.display = 'none';
+        }
+
+        function verificarLibrerias() {
+            agregarLog('Verificando librerías...', 'info');
+            
+            if (typeof L === 'undefined') {
+                agregarLog('❌ Leaflet no está disponible', 'error');
+                mostrarError('Leaflet no está cargado. Verifica la conexión a internet.');
+                return false;
+            }
+            
+            agregarLog(`✅ Leaflet cargado correctamente (v${L.version})`, 'success');
+            return true;
+        }
+
+        function verificarDOM() {
+            agregarLog('Verificando elementos del DOM...', 'info');
+            
+            const mapaElement = document.getElementById('mapa-test');
+            if (!mapaElement) {
+                agregarLog('❌ Elemento #mapa-test no encontrado', 'error');
+                return false;
+            }
+            
+            agregarLog('✅ Elemento #mapa-test encontrado', 'success');
+            
+            const rect = mapaElement.getBoundingClientRect();
+            agregarLog(`📏 Dimensiones del mapa: ${rect.width}x${rect.height}`, 'info');
+            
+            if (rect.width === 0 || rect.height === 0) {
+                agregarLog('❌ El mapa tiene dimensiones cero', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function verificarDatos() {
+            agregarLog('Verificando datos de enlaces...', 'info');
+            
+            // Intentar obtener datos del localStorage
+            try {
+                const enlacesStorage = localStorage.getItem('enlacesPtP');
+                if (enlacesStorage) {
+                    const enlaces = JSON.parse(enlacesStorage);
+                    agregarLog(`📊 Enlaces en localStorage: ${enlaces.length}`, 'info');
+                    datosEnlaces = enlaces;
+                } else {
+                    agregarLog('⚠️ No hay datos en localStorage', 'warning');
+                }
+            } catch (error) {
+                agregarLog(`❌ Error al leer localStorage: ${error.message}`, 'error');
+            }
+            
+            // Verificar si hay una tabla en la página principal
+            try {
+                const tabla = document.getElementById('tabla');
+                if (tabla) {
+                    const filas = tabla.querySelectorAll('tbody tr');
+                    agregarLog(`📋 Filas en tabla: ${filas.length}`, 'info');
+                    
+                    let coordenadasValidas = 0;
+                    filas.forEach((fila, index) => {
+                        const celdas = fila.querySelectorAll('td');
+                        if (celdas.length >= 11) {
+                            const latA = parseFloat(celdas[3]?.textContent.replace(',', '.'));
+                            const lonA = parseFloat(celdas[4]?.textContent.replace(',', '.'));
+                            const latB = parseFloat(celdas[9]?.textContent.replace(',', '.'));
+                            const lonB = parseFloat(celdas[10]?.textContent.replace(',', '.'));
+                            
+                            if (!isNaN(latA) && !isNaN(lonA) && !isNaN(latB) && !isNaN(lonB)) {
+                                coordenadasValidas++;
+                            }
+                        }
+                    });
+                    
+                    agregarLog(`📍 Coordenadas válidas: ${coordenadasValidas}/${filas.length}`, 'info');
+                } else {
+                    agregarLog('⚠️ Tabla principal no encontrada en esta página', 'warning');
+                }
+            } catch (error) {
+                agregarLog(`❌ Error al verificar tabla: ${error.message}`, 'error');
+            }
+            
+            return true;
+        }
+
+        function testMapa() {
+            agregarLog('Creando mapa de prueba...', 'info');
+            ocultarError();
+            
+            try {
+                if (mapaTest) {
+                    mapaTest.remove();
+                }
+                
+                mapaTest = L.map('mapa-test', {
+                    zoomControl: true,
+                    scrollWheelZoom: true
+                }).setView([23.6345, -102.5528], 5);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mapaTest);
+                
+                L.marker([23.6345, -102.5528]).addTo(mapaTest)
+                    .bindPopup('México - Prueba del mapa')
+                    .openPopup();
+                
+                agregarLog('✅ Mapa de prueba creado exitosamente', 'success');
+            } catch (error) {
+                agregarLog(`❌ Error al crear mapa: ${error.message}`, 'error');
+                mostrarError(`Error al crear mapa: ${error.message}`);
+            }
+        }
+
+        function testMapaCompleto() {
+            agregarLog('Intentando crear mapa completo...', 'info');
+            
+            // Simular datos de prueba si no hay datos reales
+            if (datosEnlaces.length === 0) {
+                agregarLog('📝 Creando datos de prueba...', 'info');
+                datosEnlaces = [
+                    {
+                        nombreA: 'Sitio A',
+                        latA: 19.4326,
+                        lonA: -99.1332,
+                        nombreB: 'Sitio B',
+                        latB: 20.6597,
+                        lonB: -103.3496,
+                        factible: 'Sí',
+                        estadoA: 'Ciudad de México',
+                        estadoB: 'Jalisco'
+                    },
+                    {
+                        nombreA: 'Sitio C',
+                        latA: 25.6866,
+                        lonA: -100.3161,
+                        nombreB: 'Sitio D',
+                        latB: 32.5149,
+                        lonB: -117.0382,
+                        factible: 'No',
+                        estadoA: 'Nuevo León',
+                        estadoB: 'Baja California'
+                    }
+                ];
+            }
+            
+            try {
+                if (mapaTest) {
+                    mapaTest.remove();
+                }
+                
+                mapaTest = L.map('mapa-test', {
+                    zoomControl: true,
+                    scrollWheelZoom: true,
+                    doubleClickZoom: true
+                }).setView([23.6345, -102.5528], 5);
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(mapaTest);
+                
+                let factiblesCount = 0;
+                let noFactiblesCount = 0;
+                
+                datosEnlaces.forEach((enlace, index) => {
+                    const latA = parseFloat(enlace.latA);
+                    const lonA = parseFloat(enlace.lonA);
+                    const latB = parseFloat(enlace.latB);
+                    const lonB = parseFloat(enlace.lonB);
+                    
+                    if (!isNaN(latA) && !isNaN(lonA) && !isNaN(latB) && !isNaN(lonB)) {
+                        const factible = enlace.factible?.toUpperCase().startsWith('SÍ') || 
+                                       enlace.factible?.toUpperCase().startsWith('FACTIBLE');
+                        
+                        const lineColor = factible ? '#10b981' : '#ef4444';
+                        const lineWeight = factible ? 5 : 3;
+                        
+                        // Línea del enlace
+                        L.polyline([[latA, lonA], [latB, lonB]], {
+                            color: lineColor,
+                            weight: lineWeight,
+                            opacity: 0.8,
+                            dashArray: factible ? null : '10, 5'
+                        }).addTo(mapaTest);
+                        
+                        // Marcadores
+                        const markerColor = factible ? '#10b981' : '#ef4444';
+                        const markerRadius = factible ? 8 : 6;
+                        
+                        L.circleMarker([latA, lonA], {
+                            radius: markerRadius,
+                            color: markerColor,
+                            fillColor: markerColor,
+                            fillOpacity: 0.8,
+                            weight: 2
+                        }).addTo(mapaTest).bindTooltip(`${factible ? '✓' : '✗'} ${enlace.nombreA}`, {
+                            permanent: false,
+                            direction: 'top'
+                        });
+                        
+                        L.circleMarker([latB, lonB], {
+                            radius: markerRadius,
+                            color: markerColor,
+                            fillColor: markerColor,
+                            fillOpacity: 0.8,
+                            weight: 2
+                        }).addTo(mapaTest).bindTooltip(`${factible ? '✓' : '✗'} ${enlace.nombreB}`, {
+                            permanent: false,
+                            direction: 'top'
+                        });
+                        
+                        if (factible) {
+                            factiblesCount++;
+                        } else {
+                            noFactiblesCount++;
+                        }
+                    }
+                });
+                
+                agregarLog(`✅ Mapa completo creado con ${datosEnlaces.length} enlaces`, 'success');
+                agregarLog(`📊 Factibles: ${factiblesCount}, No Factibles: ${noFactiblesCount}`, 'info');
+                
+            } catch (error) {
+                agregarLog(`❌ Error al crear mapa completo: ${error.message}`, 'error');
+                mostrarError(`Error al crear mapa completo: ${error.message}`);
+            }
+        }
+
+        function limpiarMapa() {
+            if (mapaTest) {
+                mapaTest.remove();
+                mapaTest = null;
+                agregarLog('🗑️ Mapa limpiado', 'info');
+            }
+        }
+
+        function analizarDatosEnlaces() {
+            agregarLog('Analizando datos de enlaces...', 'info');
+            
+            const datosTabla = document.getElementById('datos-tabla');
+            
+            if (datosEnlaces.length === 0) {
+                datosTabla.innerHTML = '<div class="error-banner"><i class="fas fa-exclamation-triangle"></i> No hay datos de enlaces disponibles</div>';
+                return;
+            }
+            
+            let html = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre A</th>
+                            <th>Coordenadas A</th>
+                            <th>Nombre B</th>
+                            <th>Coordenadas B</th>
+                            <th>Estado</th>
+                            <th>Factible</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            datosEnlaces.forEach(enlace => {
+                const factible = enlace.factible?.toUpperCase().startsWith('SÍ') || 
+                               enlace.factible?.toUpperCase().startsWith('FACTIBLE');
+                
+                html += `
+                    <tr>
+                        <td>${enlace.nombreA || 'N/A'}</td>
+                        <td>${enlace.latA}, ${enlace.lonA}</td>
+                        <td>${enlace.nombreB || 'N/A'}</td>
+                        <td>${enlace.latB}, ${enlace.lonB}</td>
+                        <td>${enlace.estadoA || 'N/A'}</td>
+                        <td><span class="status ${factible ? 'success' : 'error'}">${factible ? 'Sí' : 'No'}</span></td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            datosTabla.innerHTML = html;
+            
+            agregarLog(`📊 Análisis completado: ${datosEnlaces.length} enlaces mostrados`, 'success');
+        }
+
+        function verificarCoordenadas() {
+            agregarLog('Verificando coordenadas...', 'info');
+            
+            if (datosEnlaces.length === 0) {
+                agregarLog('⚠️ No hay datos para verificar', 'warning');
+                return;
+            }
+            
+            let validas = 0;
+            let invalidas = 0;
+            
+            datosEnlaces.forEach((enlace, index) => {
+                const latA = parseFloat(enlace.latA);
+                const lonA = parseFloat(enlace.lonA);
+                const latB = parseFloat(enlace.latB);
+                const lonB = parseFloat(enlace.lonB);
+                
+                if (!isNaN(latA) && !isNaN(lonA) && !isNaN(latB) && !isNaN(lonB)) {
+                    validas++;
+                    agregarLog(`✅ Enlace ${index + 1}: Coordenadas válidas`, 'success');
+                } else {
+                    invalidas++;
+                    agregarLog(`❌ Enlace ${index + 1}: Coordenadas inválidas`, 'error');
+                }
+            });
+            
+            agregarLog(`📊 Resumen: ${validas} válidas, ${invalidas} inválidas`, 'info');
+        }
+
+        async function diagnosticoCompleto() {
+            agregarLog('=== INICIANDO DIAGNÓSTICO COMPLETO ===', 'info');
+            actualizarProgreso(0);
+            
+            const pasos = [
+                { nombre: 'Verificando librerías', funcion: verificarLibrerias },
+                { nombre: 'Verificando DOM', funcion: verificarDOM },
+                { nombre: 'Verificando datos', funcion: verificarDatos },
+                { nombre: 'Probando mapa simple', funcion: testMapa }
+            ];
+            
+            for (let i = 0; i < pasos.length; i++) {
+                const paso = pasos[i];
+                agregarLog(`🔄 ${paso.nombre}...`, 'info');
+                
+                try {
+                    const resultado = paso.funcion();
+                    if (resultado !== false) {
+                        agregarLog(`✅ ${paso.nombre} completado`, 'success');
+                    } else {
+                        agregarLog(`❌ ${paso.nombre} falló`, 'error');
+                    }
+                } catch (error) {
+                    agregarLog(`❌ Error en ${paso.nombre}: ${error.message}`, 'error');
+                }
+                
+                actualizarProgreso(((i + 1) / pasos.length) * 100);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            agregarLog('=== DIAGNÓSTICO COMPLETADO ===', 'info');
+            agregarLog('💡 Si hay errores, verifica la conexión a internet y que todos los archivos estén presentes.', 'info');
+        }
+
+        function limpiarLog() {
+            document.getElementById('log-area').innerHTML = '';
+            document.getElementById('progress-fill').style.width = '0%';
+            agregarLog('🧹 Log limpiado', 'info');
+        }
+
+        // Inicialización
+        window.addEventListener('load', () => {
+            agregarLog('🚀 Sistema de diagnóstico cargado', 'success');
+            verificarLibrerias();
+        });
+    </script>
+</body>
+</html> 

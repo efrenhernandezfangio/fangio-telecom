@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Prueba de Botones - Fangio Telecom</title>
+  <style>
+    body {
+      background: #081421;
+      color: #e0f7fa;
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+    }
+    .test-container {
+      background: rgba(11, 17, 31, 0.8);
+      border: 1px solid #00e6ff;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .tab-button {
+      background: rgba(0,188,212,0.12);
+      color: #e0f7fa;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 32px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(30,136,229,0.08);
+      margin: 10px;
+      cursor: pointer;
+    }
+    .tab-button.active, .tab-button:hover {
+      background: linear-gradient(135deg, #00bcd4 60%, #1e88e5 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(30,136,229,0.18);
+    }
+    .btn {
+      background: linear-gradient(135deg, #00bcd4, #1e88e5);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px;
+      font-weight: 600;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #1e88e5, #00bcd4);
+    }
+    .result {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #10b981;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Prueba de Botones - Fangio Telecom</h1>
+  
+  <div class="test-container">
+    <h2>Botones de Navegación (como en ptpFangio.html)</h2>
+    <button class="tab-button active" onclick="testTabButton('formulario', event)">
+      <i class="fas fa-edit"></i> Formulario de Enlaces
+    </button>
+    <button class="tab-button" onclick="testTabButton('enlaces', event)">
+      <i class="fas fa-list"></i> Mis Enlaces
+    </button>
+    <button class="tab-button" onclick="testTabButton('resumen', event)">
+      <i class="fas fa-chart-pie"></i> Resumen
+    </button>
+    <button class="tab-button" onclick="testTabButton('microondas', event)">
+      <i class="fas fa-satellite-dish"></i> Análisis Microondas
+    </button>
+    <button class="tab-button" onclick="testTabButton('monitor', event)">
+      <i class="fas fa-tachometer-alt"></i> Monitoreo
+    </button>
+  </div>
+
+  <div class="test-container">
+    <h2>Botones Regulares</h2>
+    <button class="btn" onclick="testRegularButton('Botón 1')">Botón Regular 1</button>
+    <button class="btn" onclick="testRegularButton('Botón 2')">Botón Regular 2</button>
+    <button class="btn" onclick="testRegularButton('Botón 3')">Botón Regular 3</button>
+  </div>
+
+  <div class="test-container">
+    <h2>Botones con Event Listeners</h2>
+    <button class="btn" id="event-btn-1">Event Listener 1</button>
+    <button class="btn" id="event-btn-2">Event Listener 2</button>
+    <button class="btn" id="event-btn-3">Event Listener 3</button>
+  </div>
+
+  <div class="test-container">
+    <h2>Resultados de las Pruebas</h2>
+    <div id="test-results"></div>
+  </div>
+
+  <div class="test-container">
+    <h2>Navegación</h2>
+    <button class="btn" onclick="window.location.href='login.html'">Ir a Login</button>
+    <button class="btn" onclick="window.location.href='ptpFangio.html'">Ir a PtP</button>
+    <button class="btn" onclick="window.location.href='ptmpFangio.html'">Ir a PtMP</button>
+    <button class="btn" onclick="window.location.href='debug_buttons.html'">Ir a Diagnóstico</button>
+  </div>
+
+  <script>
+    // Función para probar botones de navegación
+    function testTabButton(tabName, event) {
+      addResult(`✅ Botón de pestaña "${tabName}" clickeado correctamente`);
+      
+      // Simular el comportamiento de mostrarPestana
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      if (event) event.currentTarget.classList.add('active');
+      
+      addResult(`🔄 Pestaña "${tabName}" activada`);
+    }
+
+    // Función para probar botones regulares
+    function testRegularButton(buttonName) {
+      addResult(`✅ ${buttonName} funcionando correctamente`);
+    }
+
+    // Función para agregar resultados
+    function addResult(message) {
+      const results = document.getElementById('test-results');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = 'result';
+      resultDiv.innerHTML = `${message} - ${new Date().toLocaleTimeString()}`;
+      results.appendChild(resultDiv);
+    }
+
+    // Event listeners para botones de prueba
+    document.getElementById('event-btn-1').addEventListener('click', function() {
+      addResult('✅ Event Listener 1 funcionando correctamente');
+    });
+
+    document.getElementById('event-btn-2').addEventListener('click', function() {
+      addResult('✅ Event Listener 2 funcionando correctamente');
+    });
+
+    document.getElementById('event-btn-3').addEventListener('click', function() {
+      addResult('✅ Event Listener 3 funcionando correctamente');
+    });
+
+    // Verificar si hay errores de JavaScript
+    window.addEventListener('error', function(e) {
+      addResult(`❌ Error de JavaScript: ${e.message}`);
+    });
+
+    // Mensaje inicial
+    addResult('🚀 Página de prueba cargada correctamente');
+  </script>
+</body>
+</html> 

@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Enlaces Microondas - FANGIO Telecom</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .analyzer-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 20px;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .panel-section {
+            margin-bottom: 25px;
+        }
+
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .btn-analyze {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e6ed;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            color: #7f8c8d;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.success { background: #27ae60; }
+        .status-indicator.warning { background: #f39c12; }
+        .status-indicator.danger { background: #e74c3c; }
+
+        .chart-container {
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="analyzer-container">
+        <div class="header">
+            <h1><i class="fas fa-satellite-dish"></i> Analizador de Enlaces Microondas</h1>
+            <p class="subtitle">Análisis avanzado especializado en comunicaciones por microondas</p>
+        </div>
+
+        <div class="main-content">
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-map-marker-alt"></i> Coordenadas</h3>
+                    <div class="form-group">
+                        <label>Latitud A:</label>
+                        <input type="number" id="latA" step="0.000001" placeholder="Ej: -34.6037">
+                    </div>
+                    <div class="form-group">
+                        <label>Longitud A:</label>
+                        <input type="number" id="lonA" step="0.000001" placeholder="Ej: -58.3816">
+                    </div>
+                    <div class="form-group">
+                        <label>Latitud B:</label>
+                        <input type="number" id="latB" step="0.000001" placeholder="Ej: -34.6037">
+                    </div>
+                    <div class="form-group">
+                        <label>Longitud B:</label>
+                        <input type="number" id="lonB" step="0.000001" placeholder="Ej: -58.3816">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-tower-broadcast"></i> Parámetros Técnicos</h3>
+                    <div class="form-group">
+                        <label>Frecuencia (GHz):</label>
+                        <select id="frecuencia">
+                            <option value="6">6 GHz</option>
+                            <option value="7">7 GHz</option>
+                            <option value="8" selected>8 GHz</option>
+                            <option value="10">10 GHz</option>
+                            <option value="11">11 GHz</option>
+                            <option value="13">13 GHz</option>
+                            <option value="15">15 GHz</option>
+                            <option value="18">18 GHz</option>
+                            <option value="23">23 GHz</option>
+                            <option value="26">26 GHz</option>
+                            <option value="28">28 GHz</option>
+                            <option value="38">38 GHz</option>
+                            <option value="60">60 GHz</option>
+                            <option value="80">80 GHz</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Altura Torre A (m):</label>
+                        <input type="number" id="alturaA" step="0.1" placeholder="Ej: 30">
+                    </div>
+                    <div class="form-group">
+                        <label>Altura Torre B (m):</label>
+                        <input type="number" id="alturaB" step="0.1" placeholder="Ej: 30">
+                    </div>
+                    <div class="form-group">
+                        <label>Factor K:</label>
+                        <input type="number" id="factorK" step="0.01" value="1.33" placeholder="1.33">
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3 class="panel-title"><i class="fas fa-cogs"></i> Configuración Avanzada</h3>
+                    <div class="form-group">
+                        <label>Clima:</label>
+                        <select id="clima">
+                            <option value="tropical">Tropical</option>
+                            <option value="temperate" selected>Templado</option>
+                            <option value="arid">Árido</option>
+                            <option value="cold">Frío</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Disponibilidad Anual (%):</label>
+                        <input type="number" id="disponibilidad" step="0.01" value="99.9" placeholder="99.9">
+                    </div>
+                    <div class="form-group">
+                        <label>Potencia TX (dBm):</label>
+                        <input type="number" id="potenciaTX" step="0.1" value="20" placeholder="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Sensibilidad RX (dBm):</label>
+                        <input type="number" id="sensibilidadRX" step="0.1" value="-85" placeholder="-85">
+                    </div>
+                </div>
+
+                <button class="btn-analyze" onclick="analizarEnlaceMicroondas()">
+                    <i class="fas fa-calculator"></i> Analizar Enlace
+                </button>
+            </div>
+
+            <div class="results-panel">
+                <div class="results-tabs">
+                    <button class="tab active" onclick="showTab('resumen')">Resumen</button>
+                    <button class="tab" onclick="showTab('pathloss')">Path Loss</button>
+                    <button class="tab" onclick="showTab('fresnel')">Zona Fresnel</button>
+                    <button class="tab" onclick="showTab('disponibilidad')">Disponibilidad</button>
+                    <button class="tab" onclick="showTab('interferencia')">Interferencias</button>
+                </div>
+
+                <div id="resumen" class="tab-content active">
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-value" id="distanciaTotal">-</div>
+                            <div class="metric-label">Distancia Total</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="pathLoss">-</div>
+                            <div class="metric-label">Path Loss (dB)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="margenFading">-</div>
+                            <div class="metric-label">Margen Fading (dB)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="disponibilidadAnual">-</div>
+                            <div class="metric-label">Disponibilidad (%)</div>
+                        </div>
+                    </div>
+                    <div id="chartResumen" class="chart-container"></div>
+                </div>
+
+                <div id="pathloss" class="tab-content">
+                    <div id="chartPathLoss" class="chart-container"></div>
+                </div>
+
+                <div id="fresnel" class="tab-content">
+                    <div id="chartFresnel" class="chart-container"></div>
+                </div>
+
+                <div id="disponibilidad" class="tab-content">
+                    <div id="chartDisponibilidad" class="chart-container"></div>
+                </div>
+
+                <div id="interferencia" class="tab-content">
+                    <div id="chartInterferencia" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        class ToastManager {
+            static show(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                
+                const icon = type === 'success' ? 'fas fa-check-circle' :
+                            type === 'error' ? 'fas fa-exclamation-circle' :
+                            type === 'warning' ? 'fas fa-exclamation-triangle' :
+                            'fas fa-info-circle';
+                
+                toast.innerHTML = `
+                    <i class="${icon}" style="color: ${type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : type === 'warning' ? '#f39c12' : '#3498db'}"></i>
+                    <span>${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 5000);
+            }
+        }
+
+        class LoadingManager {
+            static show() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            }
+            
+            static hide() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function analizarEnlaceMicroondas() {
+            LoadingManager.show();
+            
+            try {
+                const latA = parseFloat(document.getElementById('latA').value);
+                const lonA = parseFloat(document.getElementById('lonA').value);
+                const latB = parseFloat(document.getElementById('latB').value);
+                const lonB = parseFloat(document.getElementById('lonB').value);
+                const frecuencia = parseFloat(document.getElementById('frecuencia').value);
+                const alturaA = parseFloat(document.getElementById('alturaA').value);
+                const alturaB = parseFloat(document.getElementById('alturaB').value);
+                const factorK = parseFloat(document.getElementById('factorK').value);
+                const clima = document.getElementById('clima').value;
+                const disponibilidad = parseFloat(document.getElementById('disponibilidad').value);
+                const potenciaTX = parseFloat(document.getElementById('potenciaTX').value);
+                const sensibilidadRX = parseFloat(document.getElementById('sensibilidadRX').value);
+
+                if (!latA || !lonA || !latB || !lonB || !alturaA || !alturaB) {
+                    throw new Error('Por favor complete todos los campos requeridos');
+                }
+
+                // Calcular distancia
+                const distancia = calcularDistancia(latA, lonA, latB, lonB);
+                
+                // Calcular path loss
+                const pathLoss = calcularPathLoss(distancia, frecuencia, alturaA, alturaB, factorK);
+                
+                // Calcular margen de fading
+                const margenFading = calcularMargenFading(distancia, frecuencia, clima);
+                
+                // Calcular disponibilidad real
+                const disponibilidadReal = calcularDisponibilidadReal(distancia, frecuencia, clima, disponibilidad);
+                
+                // Actualizar métricas
+                document.getElementById('distanciaTotal').textContent = distancia.toFixed(2) + ' km';
+                document.getElementById('pathLoss').textContent = pathLoss.toFixed(1) + ' dB';
+                document.getElementById('margenFading').textContent = margenFading.toFixed(1) + ' dB';
+                document.getElementById('disponibilidadAnual').textContent = disponibilidadReal.toFixed(3) + '%';
+                
+                // Generar gráficos
+                generarGraficos(distancia, frecuencia, pathLoss, margenFading, disponibilidadReal);
+                
+                ToastManager.show('Análisis completado exitosamente', 'success');
+                
+            } catch (error) {
+                ToastManager.show(error.message, 'error');
+            } finally {
+                LoadingManager.hide();
+            }
+        }
+
+        function calcularDistancia(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radio de la Tierra en km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                     Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function calcularPathLoss(distancia, frecuencia, alturaA, alturaB, factorK) {
+            // Modelo ITU-R P.530 para path loss en microondas
+            const c = 3e8;
+            const lambda = c / (frecuencia * 1e9);
+            const d = distancia * 1000; // Convertir a metros
+            
+            // Cálculo básico de path loss en espacio libre
+            const pathLossFreeSpace = 20 * Math.log10(4 * Math.PI * d / lambda);
+            
+            // Factor de altura de antenas
+            const alturaEfectiva = Math.sqrt(alturaA * alturaB);
+            const factorAltura = 20 * Math.log10(alturaEfectiva / 10);
+            
+            // Factor K (curvatura de la Tierra)
+            const factorKCorrection = 10 * Math.log10(factorK);
+            
+            return pathLossFreeSpace - factorAltura + factorKCorrection;
+        }
+
+        function calcularMargenFading(distancia, frecuencia, clima) {
+            // Cálculo de margen de fading basado en ITU-R P.530
+            let factorClima = 1;
+            switch(clima) {
+                case 'tropical': factorClima = 1.5; break;
+                case 'temperate': factorClima = 1.0; break;
+                case 'arid': factorClima = 0.7; break;
+                case 'cold': factorClima = 0.5; break;
+            }
+            
+            const margen = 30 * Math.log10(distancia) + 10 * Math.log10(frecuencia) * factorClima;
+            return Math.max(margen, 15); // Mínimo 15 dB
+        }
+
+        function calcularDisponibilidadReal(distancia, frecuencia, clima, disponibilidadObjetivo) {
+            // Cálculo de disponibilidad real considerando fading
+            const margenFading = calcularMargenFading(distancia, frecuencia, clima);
+            const factorDisponibilidad = Math.exp(-margenFading / 10);
+            
+            return disponibilidadObjetivo * (1 - factorDisponibilidad);
+        }
+
+        function generarGraficos(distancia, frecuencia, pathLoss, margenFading, disponibilidad) {
+            // Gráfico de resumen
+            const traceResumen = {
+                x: ['Distancia', 'Path Loss', 'Margen Fading', 'Disponibilidad'],
+                y: [distancia, pathLoss, margenFading, disponibilidad],
+                type: 'bar',
+                marker: {
+                    color: ['#3498db', '#e74c3c', '#f39c12', '#27ae60']
+                }
+            };
+            
+            const layoutResumen = {
+                title: 'Resumen del Enlace Microondas',
+                yaxis: { title: 'Valor' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartResumen', [traceResumen], layoutResumen);
+            
+            // Gráfico de path loss vs distancia
+            const distancias = Array.from({length: 20}, (_, i) => (i + 1) * distancia / 20);
+            const pathLosses = distancias.map(d => calcularPathLoss(d, frecuencia, 30, 30, 1.33));
+            
+            const tracePathLoss = {
+                x: distancias,
+                y: pathLosses,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Path Loss',
+                line: { color: '#e74c3c', width: 3 }
+            };
+            
+            const layoutPathLoss = {
+                title: 'Path Loss vs Distancia',
+                xaxis: { title: 'Distancia (km)' },
+                yaxis: { title: 'Path Loss (dB)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartPathLoss', [tracePathLoss], layoutPathLoss);
+            
+            // Gráfico de zona Fresnel
+            const fresnelData = calcularZonaFresnel(distancia, frecuencia);
+            const traceFresnel = {
+                x: fresnelData.distancias,
+                y: fresnelData.fresnel,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Zona Fresnel',
+                fill: 'tonexty',
+                line: { color: '#3498db', width: 2 }
+            };
+            
+            const layoutFresnel = {
+                title: 'Zona Fresnel del Enlace',
+                xaxis: { title: 'Distancia (km)' },
+                yaxis: { title: 'Altura (m)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartFresnel', [traceFresnel], layoutFresnel);
+            
+            // Gráfico de disponibilidad
+            const frecuencias = [6, 8, 10, 15, 18, 23, 26, 38, 60, 80];
+            const disponibilidades = frecuencias.map(f => calcularDisponibilidadReal(distancia, f, clima, 99.9));
+            
+            const traceDisponibilidad = {
+                x: frecuencias,
+                y: disponibilidades,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Disponibilidad',
+                line: { color: '#27ae60', width: 3 }
+            };
+            
+            const layoutDisponibilidad = {
+                title: 'Disponibilidad vs Frecuencia',
+                xaxis: { title: 'Frecuencia (GHz)' },
+                yaxis: { title: 'Disponibilidad (%)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartDisponibilidad', [traceDisponibilidad], layoutDisponibilidad);
+            
+            // Gráfico de interferencias
+            const interferencias = calcularInterferencias(distancia, frecuencia);
+            const traceInterferencia = {
+                x: interferencias.frecuencias,
+                y: interferencias.niveles,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Nivel de Interferencia',
+                line: { color: '#f39c12', width: 3 }
+            };
+            
+            const layoutInterferencia = {
+                title: 'Análisis de Interferencias',
+                xaxis: { title: 'Frecuencia (GHz)' },
+                yaxis: { title: 'Nivel (dBm)' },
+                margin: { t: 50, b: 50, l: 50, r: 50 }
+            };
+            
+            Plotly.newPlot('chartInterferencia', [traceInterferencia], layoutInterferencia);
+        }
+
+        function calcularZonaFresnel(distancia, frecuencia) {
+            const c = 3e8;
+            const lambda = c / (frecuencia * 1e9);
+            const d = distancia * 1000;
+            
+            const distancias = Array.from({length: 50}, (_, i) => (i + 1) * distancia / 50);
+            const fresnel = distancias.map(d1 => {
+                const d2 = distancia - d1;
+                return Math.sqrt((lambda * d1 * d2) / distancia) * 0.6; // 60% de Fresnel
+            });
+            
+            return { distancias, fresnel };
+        }
+
+        function calcularInterferencias(distancia, frecuencia) {
+            const frecuencias = [frecuencia - 2, frecuencia - 1, frecuencia, frecuencia + 1, frecuencia + 2];
+            const niveles = frecuencias.map(f => {
+                if (f <= 0) return -100;
+                const pathLoss = calcularPathLoss(distancia, f, 30, 30, 1.33);
+                return -pathLoss + 20; // Potencia de transmisión simulada
+            });
+            
+            return { frecuencias, niveles };
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            ToastManager.show('Analizador de Enlaces Microondas cargado', 'info');
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil de Elevación - Fangio Telecom</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body { 
+      background: linear-gradient(135deg, #081421 0%, #122434 100%);
+      color: #e0f7fa; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(11, 17, 31, 0.8);
+      border-radius: 16px;
+      border: 1px solid rgba(0, 230, 255, 0.2);
+    }
+    
+    .header h1 {
+      color: #00e6ff;
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px #00e6ff55;
+    }
+    
+    .header p {
+      color: #b2ebf2;
+      font-size: 1.1rem;
+    }
+    
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .control-group {
+      background: rgba(11, 17, 31, 0.8);
+      border: 1px solid rgba(0, 230, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .control-group h3 {
+      color: #00e6ff;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .input-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .input-group label {
+      color: #b2ebf2;
+      font-weight: 600;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+    }
+    
+    .input-group input {
+      padding: 10px;
+      border: 1px solid #1e88e5;
+      border-radius: 8px;
+      background: #162032;
+      color: #e0f7fa;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: #00e6ff;
+      box-shadow: 0 0 0 2px rgba(0, 230, 255, 0.2);
+    }
+    
+    .btn {
+      background: linear-gradient(90deg, #00bcd4 60%, #1e88e5 100%);
+      color: #000;
+      font-weight: 700;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 230, 255, 0.3);
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(90deg, #6b7280 60%, #4b5563 100%);
+      color: #fff;
+    }
+    
+    .btn-success {
+      background: linear-gradient(90deg, #10b981 60%, #059669 100%);
+      color: #fff;
+    }
+    
+    .btn-danger {
+      background: linear-gradient(90deg, #ef4444 60%, #dc2626 100%);
+      color: #fff;
+    }
+    
+    .chart-container {
+      background: rgba(11, 17, 31, 0.8);
+      border: 1px solid rgba(0, 230, 255, 0.2);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .chart-title {
+      color: #00e6ff;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    #perfilElevacionPlotly {
+      width: 100%;
+      height: 500px;
+      border-radius: 12px;
+      background: #fff;
+    }
+    
+    .analysis-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .analysis-card {
+      background: rgba(11, 17, 31, 0.8);
+      border: 1px solid rgba(0, 230, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .analysis-card h3 {
+      color: #00e6ff;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0, 230, 255, 0.1);
+    }
+    
+    .metric:last-child {
+      border-bottom: none;
+    }
+    
+    .metric-label {
+      color: #b2ebf2;
+      font-weight: 600;
+    }
+    
+    .metric-value {
+      color: #00e6ff;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    .metric-value.success {
+      color: #10b981;
+    }
+    
+    .metric-value.warning {
+      color: #f59e0b;
+    }
+    
+    .metric-value.danger {
+      color: #ef4444;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-indicator.success {
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+    }
+    
+    .status-indicator.warning {
+      background: #f59e0b;
+      box-shadow: 0 0 10px #f59e0b;
+    }
+    
+    .status-indicator.danger {
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px;
+    }
+    
+    .loading.show {
+      display: block;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 230, 255, 0.2);
+      border-top: 4px solid #00e6ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 15px;
+      color: #ef4444;
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    @media (max-width: 768px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .input-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .analysis-panel {
+        grid-template-columns: 1fr;
+      }
+      
+      .header h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-mountain"></i> Perfil de Elevación</h1>
+      <p>Análisis detallado de línea de vista y zona de Fresnel</p>
+    </div>
+    
+    <div class="controls">
+      <div class="control-group">
+        <h3><i class="fas fa-map-marker-alt"></i> Coordenadas Sitio A</h3>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Latitud A</label>
+            <input type="number" id="latA" step="any" placeholder="Ej: 19.4326">
+          </div>
+          <div class="input-group">
+            <label>Longitud A</label>
+            <input type="number" id="lonA" step="any" placeholder="Ej: -99.1332">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Altura Torre A (m)</label>
+            <input type="number" id="alturaA" step="any" placeholder="Ej: 30">
+          </div>
+          <div class="input-group">
+            <label>Altura RAN A (m)</label>
+            <input type="number" id="ranA" step="any" placeholder="Ej: 2">
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-map-marker-alt"></i> Coordenadas Sitio B</h3>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Latitud B</label>
+            <input type="number" id="latB" step="any" placeholder="Ej: 19.4326">
+          </div>
+          <div class="input-group">
+            <label>Longitud B</label>
+            <input type="number" id="lonB" step="any" placeholder="Ej: -99.1332">
+          </div>
+        </div>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Altura Torre B (m)</label>
+            <input type="number" id="alturaB" step="any" placeholder="Ej: 30">
+          </div>
+          <div class="input-group">
+            <label>Altura RAN B (m)</label>
+            <input type="number" id="ranB" step="any" placeholder="Ej: 2">
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-cogs"></i> Parámetros Técnicos</h3>
+        <div class="input-row">
+          <div class="input-group">
+            <label>Frecuencia (GHz)</label>
+            <input type="number" id="frecuencia" step="any" placeholder="Ej: 15">
+          </div>
+          <div class="input-group">
+            <label>Factor K</label>
+            <input type="number" id="factorK" value="1.33" step="any">
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-success" onclick="calcularPerfil()">
+            <i class="fas fa-calculator"></i> Calcular Perfil
+          </button>
+          <button class="btn btn-secondary" onclick="limpiarDatos()">
+            <i class="fas fa-trash"></i> Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Calculando perfil de elevación...</p>
+    </div>
+    
+    <div class="error-message" id="errorMessage" style="display: none;"></div>
+    
+    <div class="chart-container">
+      <div class="chart-title">
+        <i class="fas fa-chart-line"></i> Perfil de Elevación
+      </div>
+      <div id="perfilElevacionPlotly"></div>
+    </div>
+    
+    <div class="analysis-panel">
+      <div class="analysis-card">
+        <h3><i class="fas fa-info-circle"></i> Información del Enlace</h3>
+        <div class="metric">
+          <span class="metric-label">Distancia Total:</span>
+          <span class="metric-value" id="distanciaTotal">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Frecuencia:</span>
+          <span class="metric-value" id="frecuenciaInfo">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Altura Libre Necesaria:</span>
+          <span class="metric-value" id="alturaLibre">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Radio Fresnel (60%):</span>
+          <span class="metric-value" id="radioFresnel">-</span>
+        </div>
+      </div>
+      
+      <div class="analysis-card">
+        <h3><i class="fas fa-check-circle"></i> Análisis de Factibilidad</h3>
+        <div class="metric">
+          <span class="metric-label">Línea de Vista:</span>
+          <span class="metric-value" id="lineaVista">
+            <span class="status-indicator" id="lineaVistaIndicator"></span>
+            <span id="lineaVistaText">-</span>
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Zona de Fresnel:</span>
+          <span class="metric-value" id="zonaFresnel">
+            <span class="status-indicator" id="zonaFresnelIndicator"></span>
+            <span id="zonaFresnelText">-</span>
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Margen de Seguridad:</span>
+          <span class="metric-value" id="margenSeguridad">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Factibilidad General:</span>
+          <span class="metric-value" id="factibilidadGeneral">
+            <span class="status-indicator" id="factibilidadIndicator"></span>
+            <span id="factibilidadText">-</span>
+          </span>
+        </div>
+      </div>
+      
+      <div class="analysis-card">
+        <h3><i class="fas fa-chart-bar"></i> Estadísticas del Terreno</h3>
+        <div class="metric">
+          <span class="metric-label">Elevación Máxima:</span>
+          <span class="metric-value" id="elevacionMaxima">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Elevación Mínima:</span>
+          <span class="metric-value" id="elevacionMinima">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Desnivel Total:</span>
+          <span class="metric-value" id="desnivelTotal">-</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Pendiente Promedio:</span>
+          <span class="metric-value" id="pendientePromedio">-</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button class="btn btn-success" onclick="exportarPerfil()">
+        <i class="fas fa-download"></i> Exportar Perfil
+      </button>
+      <button class="btn btn-secondary" onclick="guardarPerfil()">
+        <i class="fas fa-save"></i> Guardar Perfil
+      </button>
+      <button class="btn btn-danger" onclick="window.close()">
+        <i class="fas fa-times"></i> Cerrar
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Load data from URL parameters
+    function getDatos() {
+      const params = new URLSearchParams(window.location.search);
+      try {
+        return JSON.parse(decodeURIComponent(params.get('datos')));
+      } catch {
+        return {};
+      }
+    }
+    
+    // Initialize form with data from URL
+    function inicializarFormulario() {
+      const datos = getDatos();
+      if (datos) {
+        document.getElementById('latA').value = datos.latA || datos['Latitud A'] || '';
+        document.getElementById('lonA').value = datos.lonA || datos['Longitud A'] || '';
+        document.getElementById('latB').value = datos.latB || datos['Latitud B'] || '';
+        document.getElementById('lonB').value = datos.lonB || datos['Longitud B'] || '';
+        document.getElementById('alturaA').value = datos.alturaA || datos['Altura Torre A'] || '';
+        document.getElementById('alturaB').value = datos.alturaB || datos['Altura Torre B'] || '';
+        document.getElementById('frecuencia').value = datos.frecuencia || datos['Frecuencia'] || '';
+        
+        // Auto-calculate if we have all required data
+        if (datos.latA && datos.lonA && datos.latB && datos.lonB) {
+          setTimeout(() => calcularPerfil(), 500);
+        }
+      }
+    }
+    
+    async function calcularPerfil() {
+      const latA = parseFloat(document.getElementById('latA').value);
+      const lonA = parseFloat(document.getElementById('lonA').value);
+      const latB = parseFloat(document.getElementById('latB').value);
+      const lonB = parseFloat(document.getElementById('lonB').value);
+      const alturaA = parseFloat(document.getElementById('alturaA').value) || 0;
+      const alturaB = parseFloat(document.getElementById('alturaB').value) || 0;
+      const frecuenciaGHz = parseFloat(document.getElementById('frecuencia').value);
+      const factorK = parseFloat(document.getElementById('factorK').value) || 1.33;
+      
+      // Validation
+      if (isNaN(latA) || isNaN(lonA) || isNaN(latB) || isNaN(lonB)) {
+        mostrarError('Por favor, ingresa coordenadas válidas para ambos sitios.');
+        return;
+      }
+      
+      if (isNaN(frecuenciaGHz) || frecuenciaGHz <= 0) {
+        mostrarError('Por favor, ingresa una frecuencia válida mayor a 0.');
+        return;
+      }
+      
+      mostrarLoading(true);
+      ocultarError();
+      
+      try {
+        // Generate intermediate points
+        const numPuntos = 100;
+        const lats = [], lons = [];
+        for (let i = 0; i <= numPuntos; i++) {
+          lats.push(latA + (latB - latA) * i / numPuntos);
+          lons.push(lonA + (lonB - lonA) * i / numPuntos);
+        }
+        
+        // Query Open-Elevation
+        const locations = lats.map((lat, i) => `${lat},${lons[i]}`).join('|');
+        let elevaciones = [];
+        
+        try {
+          const resp = await fetch(`https://api.open-elevation.com/api/v1/lookup?locations=${locations}`);
+          const data = await resp.json();
+          elevaciones = data.results.map(r => r.elevation);
+        } catch (error) {
+          // Fallback: generate synthetic elevation data
+          elevaciones = generarElevacionesSinteticas(lats, lons, numPuntos);
+        }
+        
+        // Calculate distances and heights
+        const R = 6371000;
+        function toRad(x) { return x * Math.PI / 180; }
+        function distancia(lat1, lon1, lat2, lon2) {
+          const dLat = toRad(lat2 - lat1);
+          const dLon = toRad(lon2 - lon1);
+          const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+          return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        
+        const totalDist = distancia(latA, lonA, latB, lonB);
+        const distancias = [];
+        for (let i = 0; i <= numPuntos; i++) {
+          distancias.push((totalDist * i / numPuntos) / 1000); // in km
+        }
+        
+        // Calculate line of sight heights
+        const alturasLinea = [];
+        for (let i = 0; i <= numPuntos; i++) {
+          const alturaTorreA = alturaA + (alturaB - alturaA) * (i / numPuntos);
+          alturasLinea.push(elevaciones[i] + alturaTorreA);
+        }
+        
+        // Calculate Fresnel zone
+        const c = 3e8;
+        const f = frecuenciaGHz * 1e9;
+        const fresnel = [];
+        for (let i = 0; i <= numPuntos; i++) {
+          const d1 = totalDist * i / numPuntos;
+          const d2 = totalDist - d1;
+          const r = Math.sqrt((c * d1 * d2) / (f * totalDist));
+          fresnel.push(alturasLinea[i] - r * 0.6); // 60% of first Fresnel zone
+        }
+        
+        // Calculate Earth curvature
+        const curvatura = [];
+        for (let i = 0; i <= numPuntos; i++) {
+          const d = distancias[i] * 1000; // convert to meters
+          const h = (d * d) / (2 * R * factorK);
+          curvatura.push(elevaciones[i] + h);
+        }
+        
+        // Plot the data
+        const traces = [
+          {
+            x: distancias,
+            y: elevaciones,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Terreno',
+            line: { color: '#8B4513', width: 3 },
+            fill: 'tonexty',
+            fillcolor: 'rgba(139, 69, 19, 0.3)'
+          },
+          {
+            x: distancias,
+            y: alturasLinea,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Línea de Vista',
+            line: { color: '#00e6ff', width: 3, dash: 'dash' }
+          },
+          {
+            x: distancias,
+            y: fresnel,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Zona de Fresnel (60%)',
+            line: { color: '#f59e0b', width: 2, dash: 'dot' },
+            fill: 'tonexty',
+            fillcolor: 'rgba(245, 158, 11, 0.1)'
+          },
+          {
+            x: distancias,
+            y: curvatura,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Curvatura Terrestre',
+            line: { color: '#ef4444', width: 2, dash: 'dot' }
+          }
+        ];
+        
+        const layout = {
+          title: {
+            text: 'Perfil de Elevación - Análisis de Línea de Vista',
+            font: { color: '#00e6ff', size: 18 }
+          },
+          xaxis: {
+            title: 'Distancia (km)',
+            gridcolor: 'rgba(0, 230, 255, 0.1)',
+            zerolinecolor: 'rgba(0, 230, 255, 0.3)'
+          },
+          yaxis: {
+            title: 'Elevación (m)',
+            gridcolor: 'rgba(0, 230, 255, 0.1)',
+            zerolinecolor: 'rgba(0, 230, 255, 0.3)'
+          },
+          plot_bgcolor: 'rgba(0,0,0,0)',
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          font: { color: '#e0f7fa' },
+          legend: {
+            bgcolor: 'rgba(11, 17, 31, 0.8)',
+            bordercolor: 'rgba(0, 230, 255, 0.2)',
+            borderwidth: 1
+          },
+          margin: { t: 60, b: 60, l: 60, r: 60 }
+        };
+        
+        Plotly.newPlot('perfilElevacionPlotly', traces, layout, { responsive: true });
+        
+        // Update analysis panel
+        actualizarPanelAnalisis(elevaciones, distancias, alturasLinea, fresnel, curvatura, totalDist, frecuenciaGHz);
+        
+      } catch (error) {
+        console.error('Error calculating profile:', error);
+        mostrarError('Error al calcular el perfil de elevación. Verifica los datos ingresados.');
+      } finally {
+        mostrarLoading(false);
+      }
+    }
+    
+    function generarElevacionesSinteticas(lats, lons, numPuntos) {
+      // Generate synthetic elevation data for demonstration
+      const elevaciones = [];
+      for (let i = 0; i <= numPuntos; i++) {
+        const t = i / numPuntos;
+        const baseElevation = 2000; // Base elevation in meters
+        const variation = Math.sin(t * Math.PI * 3) * 100 + Math.cos(t * Math.PI * 2) * 50;
+        elevaciones.push(baseElevation + variation);
+      }
+      return elevaciones;
+    }
+    
+    function actualizarPanelAnalisis(elevaciones, distancias, alturasLinea, fresnel, curvatura, totalDist, frecuenciaGHz) {
+      // Update link information
+      document.getElementById('distanciaTotal').textContent = (totalDist / 1000).toFixed(2) + ' km';
+      document.getElementById('frecuenciaInfo').textContent = frecuenciaGHz + ' GHz';
+      
+      // Calculate required free height
+      const alturaLibreNecesaria = Math.max(...fresnel) - Math.max(...elevaciones);
+      document.getElementById('alturaLibre').textContent = alturaLibreNecesaria.toFixed(2) + ' m';
+      
+      // Calculate Fresnel radius
+      const c = 3e8;
+      const f = frecuenciaGHz * 1e9;
+      const radioFresnel = Math.sqrt((c * (totalDist/2) * (totalDist/2)) / (f * totalDist)) * 0.6;
+      document.getElementById('radioFresnel').textContent = radioFresnel.toFixed(2) + ' m';
+      
+      // Analyze line of sight
+      const alturaDisponible = Math.min(
+        parseFloat(document.getElementById('alturaA').value) || 0,
+        parseFloat(document.getElementById('alturaB').value) || 0
+      );
+      
+      const lineaVistaFactible = alturaDisponible >= alturaLibreNecesaria;
+      const lineaVistaIndicator = document.getElementById('lineaVistaIndicator');
+      const lineaVistaText = document.getElementById('lineaVistaText');
+      
+      if (lineaVistaFactible) {
+        lineaVistaIndicator.className = 'status-indicator success';
+        lineaVistaText.textContent = 'Factible';
+        lineaVistaText.className = 'metric-value success';
+      } else {
+        lineaVistaIndicator.className = 'status-indicator danger';
+        lineaVistaText.textContent = 'Obstruida';
+        lineaVistaText.className = 'metric-value danger';
+      }
+      
+      // Analyze Fresnel zone
+      const fresnelObstruido = fresnel.some((f, i) => f < elevaciones[i]);
+      const zonaFresnelIndicator = document.getElementById('zonaFresnelIndicator');
+      const zonaFresnelText = document.getElementById('zonaFresnelText');
+      
+      if (!fresnelObstruido) {
+        zonaFresnelIndicator.className = 'status-indicator success';
+        zonaFresnelText.textContent = 'Libre';
+        zonaFresnelText.className = 'metric-value success';
+      } else {
+        zonaFresnelIndicator.className = 'status-indicator warning';
+        zonaFresnelText.textContent = 'Obstruida';
+        zonaFresnelText.className = 'metric-value warning';
+      }
+      
+      // Calculate safety margin
+      const margenSeguridad = alturaDisponible - alturaLibreNecesaria;
+      const margenElement = document.getElementById('margenSeguridad');
+      margenElement.textContent = margenSeguridad.toFixed(2) + ' m';
+      margenElement.className = margenSeguridad >= 0 ? 'metric-value success' : 'metric-value danger';
+      
+      // Overall feasibility
+      const factibilidadGeneral = lineaVistaFactible && !fresnelObstruido;
+      const factibilidadIndicator = document.getElementById('factibilidadIndicator');
+      const factibilidadText = document.getElementById('factibilidadText');
+      
+      if (factibilidadGeneral) {
+        factibilidadIndicator.className = 'status-indicator success';
+        factibilidadText.textContent = 'FACTIBLE';
+        factibilidadText.className = 'metric-value success';
+      } else {
+        factibilidadIndicator.className = 'status-indicator danger';
+        factibilidadText.textContent = 'NO FACTIBLE';
+        factibilidadText.className = 'metric-value danger';
+      }
+      
+      // Terrain statistics
+      const elevacionMaxima = Math.max(...elevaciones);
+      const elevacionMinima = Math.min(...elevaciones);
+      const desnivelTotal = elevacionMaxima - elevacionMinima;
+      const pendientePromedio = (desnivelTotal / (totalDist / 1000)) * 100;
+      
+      document.getElementById('elevacionMaxima').textContent = elevacionMaxima.toFixed(0) + ' m';
+      document.getElementById('elevacionMinima').textContent = elevacionMinima.toFixed(0) + ' m';
+      document.getElementById('desnivelTotal').textContent = desnivelTotal.toFixed(0) + ' m';
+      document.getElementById('pendientePromedio').textContent = pendientePromedio.toFixed(1) + '%';
+    }
+    
+    function mostrarLoading(mostrar) {
+      const loading = document.getElementById('loading');
+      if (mostrar) {
+        loading.classList.add('show');
+      } else {
+        loading.classList.remove('show');
+      }
+    }
+    
+    function mostrarError(mensaje) {
+      const errorElement = document.getElementById('errorMessage');
+      errorElement.textContent = mensaje;
+      errorElement.style.display = 'block';
+    }
+    
+    function ocultarError() {
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+    
+    function limpiarDatos() {
+      document.getElementById('latA').value = '';
+      document.getElementById('lonA').value = '';
+      document.getElementById('latB').value = '';
+      document.getElementById('lonB').value = '';
+      document.getElementById('alturaA').value = '';
+      document.getElementById('alturaB').value = '';
+      document.getElementById('frecuencia').value = '';
+      document.getElementById('factorK').value = '1.33';
+      
+      // Clear chart
+      document.getElementById('perfilElevacionPlotly').innerHTML = '';
+      
+      // Clear analysis panel
+      const metricValues = document.querySelectorAll('.metric-value');
+      metricValues.forEach(el => {
+        if (!el.querySelector('.status-indicator')) {
+          el.textContent = '-';
+        }
+      });
+      
+      const statusIndicators = document.querySelectorAll('.status-indicator');
+      statusIndicators.forEach(el => {
+        el.className = 'status-indicator';
+      });
+      
+      ocultarError();
+    }
+    
+    function exportarPerfil() {
+      // Implementation for exporting profile data
+      alert('Función de exportación en desarrollo');
+    }
+    
+    function guardarPerfil() {
+      // Implementation for saving profile
+      alert('Función de guardado en desarrollo');
+    }
+    
+    // Initialize on page load
+    window.addEventListener('load', inicializarFormulario);
+    
+    // Add event listeners for auto-calculation
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('change', () => {
+        const latA = document.getElementById('latA').value;
+        const lonA = document.getElementById('lonA').value;
+        const latB = document.getElementById('latB').value;
+        const lonB = document.getElementById('lonB').value;
+        const frecuencia = document.getElementById('frecuencia').value;
+        
+        if (latA && lonA && latB && lonB && frecuencia) {
+          setTimeout(() => calcularPerfil(), 1000);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

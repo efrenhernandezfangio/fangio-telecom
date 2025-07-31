@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor de Enlaces Microondas - FANGIO Telecom</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="config.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .monitor-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #fff;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: linear-gradient(45deg, #00d4aa, #0099cc);
+            color: white;
+        }
+
+        .status-offline {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .links-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .alerts-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            height: fit-content;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .link-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .link-card.critical {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .link-card.warning {
+            border-color: #f39c12;
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .link-card.normal {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .link-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .link-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .link-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-critical { background: #e74c3c; color: white; }
+        .status-warning { background: #f39c12; color: white; }
+        .status-normal { background: #27ae60; color: white; }
+
+        .link-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #bdc3c7;
+        }
+
+        .link-chart {
+            height: 100px;
+            margin-top: 10px;
+        }
+
+        .alerts-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+
+        .alert-critical { border-left-color: #e74c3c; }
+        .alert-warning { border-left-color: #f39c12; }
+        .alert-info { border-left-color: #3498db; }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .alert-time {
+            font-size: 0.8rem;
+            color: #bdc3c7;
+        }
+
+        .alert-message {
+            font-size: 0.9rem;
+            color: #ecf0f1;
+        }
+
+        .telemetry-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-top: 20px;
+        }
+
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .telemetry-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .telemetry-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .telemetry-label {
+            font-size: 0.9rem;
+            color: #bdc3c7;
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="monitor-container">
+        <div class="header">
+            <h1><i class="fas fa-satellite-dish"></i> Monitor de Enlaces Microondas</h1>
+            <div class="status-indicator status-online">
+                <div class="pulse"></div>
+                <span>ONLINE - Monitoreando 12 enlaces</span>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="links-panel">
+                <h3 class="panel-title"><i class="fas fa-network-wired"></i> Estado de Enlaces</h3>
+                <div class="links-grid" id="linksGrid">
+                    <!-- Los enlaces se generarán dinámicamente -->
+                </div>
+            </div>
+
+            <div class="alerts-panel">
+                <h3 class="panel-title"><i class="fas fa-exclamation-triangle"></i> Alertas Activas</h3>
+                <div class="alerts-list" id="alertsList">
+                    <!-- Las alertas se generarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+
+        <div class="telemetry-panel">
+            <h3 class="panel-title"><i class="fas fa-chart-line"></i> Telemetría Global</h3>
+            <div class="telemetry-grid">
+                <div class="telemetry-card">
+                    <div class="telemetry-value" id="totalLinks">12</div>
+                    <div class="telemetry-label">Enlaces Activos</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-value" id="avgRSSI">-45.2</div>
+                    <div class="telemetry-label">RSSI Promedio (dBm)</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-value" id="avgSNR">25.8</div>
+                    <div class="telemetry-label">SNR Promedio (dB)</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-value" id="uptime">99.97%</div>
+                    <div class="telemetry-label">Uptime Global</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-value" id="activeAlerts">3</div>
+                    <div class="telemetry-label">Alertas Activas</div>
+                </div>
+                <div class="telemetry-card">
+                    <div class="telemetry-value" id="dataRate">2.4</div>
+                    <div class="telemetry-label">Tasa de Datos (Gbps)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+        class ToastManager {
+            static show(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                
+                const icon = type === 'success' ? 'fas fa-check-circle' :
+                            type === 'error' ? 'fas fa-exclamation-circle' :
+                            type === 'warning' ? 'fas fa-exclamation-triangle' :
+                            'fas fa-info-circle';
+                
+                const color = type === 'success' ? '#27ae60' : 
+                             type === 'error' ? '#e74c3c' : 
+                             type === 'warning' ? '#f39c12' : '#3498db';
+                
+                toast.innerHTML = `
+                    <i class="${icon}" style="color: ${color}"></i>
+                    <span>${message}</span>
+                `;
+                
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 5000);
+            }
+        }
+
+        class MicrowaveMonitor {
+            constructor() {
+                this.links = [];
+                this.alerts = [];
+                this.updateInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.loadInitialData();
+                this.startRealTimeUpdates();
+                this.setupEventListeners();
+            }
+
+            loadInitialData() {
+                // Simular datos de enlaces microondas
+                this.links = [
+                    {
+                        id: 1,
+                        name: 'Link-MW-001',
+                        siteA: 'Torre Norte',
+                        siteB: 'Torre Sur',
+                        frequency: '8 GHz',
+                        distance: '15.2 km',
+                        status: 'normal',
+                        rssi: -42.5,
+                        snr: 28.3,
+                        availability: 99.98,
+                        temperature: 25.4,
+                        humidity: 45.2,
+                        power: 18.7,
+                        data: this.generateHistoricalData()
+                    },
+                    {
+                        id: 2,
+                        name: 'Link-MW-002',
+                        siteA: 'Centro Comercial',
+                        siteB: 'Oficinas Centrales',
+                        frequency: '15 GHz',
+                        distance: '8.7 km',
+                        status: 'warning',
+                        rssi: -58.2,
+                        snr: 18.7,
+                        availability: 99.85,
+                        temperature: 28.1,
+                        humidity: 52.8,
+                        power: 16.3,
+                        data: this.generateHistoricalData()
+                    },
+                    {
+                        id: 3,
+                        name: 'Link-MW-003',
+                        siteA: 'Residencial Este',
+                        siteB: 'Residencial Oeste',
+                        frequency: '23 GHz',
+                        distance: '3.2 km',
+                        status: 'critical',
+                        rssi: -72.8,
+                        snr: 12.4,
+                        availability: 98.45,
+                        temperature: 31.2,
+                        humidity: 68.5,
+                        power: 14.1,
+                        data: this.generateHistoricalData()
+                    },
+                    {
+                        id: 4,
+                        name: 'Link-MW-004',
+                        siteA: 'Parque Industrial',
+                        siteB: 'Puerto',
+                        frequency: '6 GHz',
+                        distance: '22.1 km',
+                        status: 'normal',
+                        rssi: -38.9,
+                        snr: 32.1,
+                        availability: 99.99,
+                        temperature: 22.7,
+                        humidity: 38.9,
+                        power: 20.5,
+                        data: this.generateHistoricalData()
+                    }
+                ];
+
+                this.alerts = [
+                    {
+                        id: 1,
+                        type: 'critical',
+                        title: 'RSSI Crítico',
+                        message: 'Link-MW-003: RSSI por debajo del umbral crítico (-70 dBm)',
+                        time: new Date(Date.now() - 5 * 60 * 1000)
+                    },
+                    {
+                        id: 2,
+                        type: 'warning',
+                        title: 'SNR Bajo',
+                        message: 'Link-MW-002: SNR por debajo del umbral recomendado (20 dB)',
+                        time: new Date(Date.now() - 15 * 60 * 1000)
+                    },
+                    {
+                        id: 3,
+                        type: 'info',
+                        title: 'Mantenimiento Programado',
+                        message: 'Link-MW-001: Mantenimiento programado para mañana 02:00',
+                        time: new Date(Date.now() - 30 * 60 * 1000)
+                    }
+                ];
+
+                this.renderLinks();
+                this.renderAlerts();
+                this.updateTelemetry();
+            }
+
+            generateHistoricalData() {
+                const data = [];
+                const now = Date.now();
+                for (let i = 0; i < 24; i++) {
+                    data.push({
+                        time: new Date(now - (23 - i) * 60 * 60 * 1000),
+                        rssi: -40 + Math.random() * 20 - 10,
+                        snr: 20 + Math.random() * 15,
+                        availability: 99.5 + Math.random() * 0.5
+                    });
+                }
+                return data;
+            }
+
+            renderLinks() {
+                const grid = document.getElementById('linksGrid');
+                grid.innerHTML = '';
+
+                this.links.forEach(link => {
+                    const card = document.createElement('div');
+                    card.className = `link-card ${link.status}`;
+                    
+                    card.innerHTML = `
+                        <div class="link-header">
+                            <div class="link-name">${link.name}</div>
+                            <div class="link-status status-${link.status}">${link.status.toUpperCase()}</div>
+                        </div>
+                        <div class="link-metrics">
+                            <div class="metric">
+                                <div class="metric-value">${link.rssi.toFixed(1)}</div>
+                                <div class="metric-label">RSSI (dBm)</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${link.snr.toFixed(1)}</div>
+                                <div class="metric-label">SNR (dB)</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${link.availability.toFixed(2)}%</div>
+                                <div class="metric-label">Disponibilidad</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value">${link.temperature.toFixed(1)}°C</div>
+                                <div class="metric-label">Temperatura</div>
+                            </div>
+                        </div>
+                        <div class="link-chart" id="chart-${link.id}"></div>
+                    `;
+                    
+                    grid.appendChild(card);
+                    
+                    // Generar gráfico para el enlace
+                    this.generateLinkChart(link);
+                });
+            }
+
+            generateLinkChart(link) {
+                const trace = {
+                    x: link.data.map(d => d.time),
+                    y: link.data.map(d => d.rssi),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'RSSI',
+                    line: { 
+                        color: link.status === 'critical' ? '#e74c3c' : 
+                               link.status === 'warning' ? '#f39c12' : '#27ae60',
+                        width: 2
+                    }
+                };
+                
+                const layout = {
+                    margin: { t: 10, b: 20, l: 30, r: 10 },
+                    xaxis: { 
+                        showgrid: false,
+                        showticklabels: false
+                    },
+                    yaxis: { 
+                        showgrid: false,
+                        showticklabels: false
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    showlegend: false
+                };
+                
+                Plotly.newPlot(`chart-${link.id}`, [trace], layout, {displayModeBar: false});
+            }
+
+            renderAlerts() {
+                const list = document.getElementById('alertsList');
+                list.innerHTML = '';
+
+                this.alerts.forEach(alert => {
+                    const item = document.createElement('div');
+                    item.className = `alert-item alert-${alert.type}`;
+                    
+                    item.innerHTML = `
+                        <div class="alert-header">
+                            <div class="alert-title">${alert.title}</div>
+                            <div class="alert-time">${this.formatTime(alert.time)}</div>
+                        </div>
+                        <div class="alert-message">${alert.message}</div>
+                    `;
+                    
+                    list.appendChild(item);
+                });
+            }
+
+            updateTelemetry() {
+                const avgRSSI = this.links.reduce((sum, link) => sum + link.rssi, 0) / this.links.length;
+                const avgSNR = this.links.reduce((sum, link) => sum + link.snr, 0) / this.links.length;
+                const avgAvailability = this.links.reduce((sum, link) => sum + link.availability, 0) / this.links.length;
+                const criticalAlerts = this.alerts.filter(a => a.type === 'critical').length;
+                const totalDataRate = this.links.length * 0.6; // Simular tasa de datos
+
+                document.getElementById('avgRSSI').textContent = avgRSSI.toFixed(1);
+                document.getElementById('avgSNR').textContent = avgSNR.toFixed(1);
+                document.getElementById('uptime').textContent = avgAvailability.toFixed(2) + '%';
+                document.getElementById('activeAlerts').textContent = criticalAlerts;
+                document.getElementById('dataRate').textContent = totalDataRate.toFixed(1);
+            }
+
+            startRealTimeUpdates() {
+                this.updateInterval = setInterval(() => {
+                    this.updateLinkData();
+                    this.checkAlerts();
+                    this.updateTelemetry();
+                }, 5000); // Actualizar cada 5 segundos
+            }
+
+            updateLinkData() {
+                this.links.forEach(link => {
+                    // Simular variaciones en tiempo real
+                    link.rssi += (Math.random() - 0.5) * 2;
+                    link.snr += (Math.random() - 0.5) * 1;
+                    link.temperature += (Math.random() - 0.5) * 0.5;
+                    
+                    // Actualizar estado basado en métricas
+                    if (link.rssi < -70 || link.snr < 15) {
+                        link.status = 'critical';
+                    } else if (link.rssi < -60 || link.snr < 20) {
+                        link.status = 'warning';
+                    } else {
+                        link.status = 'normal';
+                    }
+                    
+                    // Agregar nuevo punto de datos
+                    link.data.push({
+                        time: new Date(),
+                        rssi: link.rssi,
+                        snr: link.snr,
+                        availability: link.availability
+                    });
+                    
+                    // Mantener solo las últimas 24 horas
+                    if (link.data.length > 24) {
+                        link.data.shift();
+                    }
+                });
+                
+                this.renderLinks();
+            }
+
+            checkAlerts() {
+                this.links.forEach(link => {
+                    if (link.rssi < -70 && !this.alerts.some(a => a.message.includes(link.name) && a.type === 'critical')) {
+                        this.alerts.unshift({
+                            id: Date.now(),
+                            type: 'critical',
+                            title: 'RSSI Crítico',
+                            message: `${link.name}: RSSI por debajo del umbral crítico (${link.rssi.toFixed(1)} dBm)`,
+                            time: new Date()
+                        });
+                        
+                        ToastManager.show(`Alerta crítica: ${link.name}`, 'error');
+                    }
+                    
+                    if (link.snr < 15 && !this.alerts.some(a => a.message.includes(link.name) && a.type === 'warning')) {
+                        this.alerts.unshift({
+                            id: Date.now(),
+                            type: 'warning',
+                            title: 'SNR Bajo',
+                            message: `${link.name}: SNR por debajo del umbral recomendado (${link.snr.toFixed(1)} dB)`,
+                            time: new Date()
+                        });
+                        
+                        ToastManager.show(`Alerta de advertencia: ${link.name}`, 'warning');
+                    }
+                });
+                
+                // Mantener solo las últimas 10 alertas
+                if (this.alerts.length > 10) {
+                    this.alerts = this.alerts.slice(0, 10);
+                }
+                
+                this.renderAlerts();
+            }
+
+            formatTime(date) {
+                const now = new Date();
+                const diff = now - date;
+                
+                if (diff < 60000) return 'Ahora';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
+                return date.toLocaleDateString();
+            }
+
+            setupEventListeners() {
+                // Event listeners para interacciones futuras
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            const monitor = new MicrowaveMonitor();
+            ToastManager.show('Monitor de Enlaces Microondas iniciado', 'success');
+        });
+    </script>
+</body>
+</html> 
